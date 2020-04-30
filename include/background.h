@@ -61,6 +61,8 @@ struct background
 
   double Omega0_fld; /**< \f$ \Omega_{0 de} \f$: fluid */
 
+  double Omega0_lrs; /**< \f$ \Omega_{0 lrs} \f$: scalar sourcing long-range interaction */
+
   enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
 
   double w0_fld; /**< \f$ w0_{DE} \f$: current fluid equation of state parameter */
@@ -79,6 +81,12 @@ struct background
                     such way to have all fld parameters grouped. */
 
   double c_gamma_over_c_fld; /**< ppf parameter defined in eq. (16) of 0808.3125 [astro-ph] */
+
+  /* Parameters for the long range interaction */
+  double lrs_m_F; /**< Mass of the fermion sourcing the long range interaction */
+  double lrs_g_over_M; /**< Coupling divided by scalar mass */
+  int lrs_g_F; /**< Number of degrees of freedom of fermion sourcing the long range interaction */
+  double lrs_T_F; /**< Ratio between fermion and photon temperatures */
 
   double Omega0_ur; /**< \f$ \Omega_{0 \nu r} \f$: ultra-relativistic neutrinos */
 
@@ -194,6 +202,9 @@ struct background
   int index_bg_rho_dcdm;      /**< dcdm density */
   int index_bg_rho_dr;        /**< dr density */
 
+  int index_bg_rho_lrs;       /**< density of the fermion+scalar system in the presence of a long-range self interaction */
+  int index_bg_p_lrs;         /**< pressure of the fermion+scalar system in the presence of a long-range self interaction */
+
   int index_bg_phi_scf;       /**< scalar field value */
   int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
   int index_bg_V_scf;         /**< scalar field potential V */
@@ -305,6 +316,7 @@ struct background
   short has_idr;       /**< presence of interacting dark radiation? */
   short has_idm_dr;    /**< presence of dark matter interacting with dark radiation? */
   short has_curvature; /**< presence of global spatial curvature? */
+  short has_lrs;       /**< presence of long-range mediating scalar? */
 
   //@}
 

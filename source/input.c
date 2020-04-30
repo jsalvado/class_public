@@ -4,6 +4,7 @@
  */
 
 #include "input.h"
+#include "longrange.h"
 
 /**
  * Use this routine to extract initial parameters from files 'xxx.ini'
@@ -1245,6 +1246,20 @@ int input_read_parameters(
   /** - Set curvature sign */
   if (pba->K > 0.) pba->sgnK = 1;
   else if (pba->K < 0.) pba->sgnK = -1;
+
+  /** - Long range interaction parameters */
+  class_read_double("lrs_m_F",pba->lrs_m_F);
+  class_read_double("lrs_g_over_M",pba->lrs_g_over_M);
+  class_read_int("lrs_g_F",pba->lrs_g_F);
+  class_read_double("lrs_T_F",pba->lrs_T_F);
+
+  if (pba->lrs_g_over_M > 1e-10){
+    double T_F = pba->lrs_T_F * (pba->T_cmb * _k_B_ / _eV_); // Fermion temperature [eV]
+    double phi_M = getphi_M(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F); // Scalar field times mass [eV^2]
+    pba->Omega0_lrs = _eV4_to_rho_class * (0.5 * pow(phi_M, 2) + 
+					   getrhoF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M)) / pow(pba->H0, 2);
+    Omega_tot += pba->Omega0_lrs;
+  }
 
   /** - Omega_0_lambda (cosmological constant), Omega0_fld (dark energy fluid), Omega0_scf (scalar field) */
 
@@ -3201,6 +3216,11 @@ int input_default_params(
   //MZ: initial conditions are as multiplicative factors of the radiation attractor values
   pba->phi_ini_scf = 1;
   pba->phi_prime_ini_scf = 1;
+
+  pba->lrs_m_F = 0.;
+  pba->lrs_g_over_M = 0.;
+  pba->lrs_g_F = 0;
+  pba->lrs_T_F = 0.;
 
   pba->Omega0_k = 0.;
   pba->K = 0.;

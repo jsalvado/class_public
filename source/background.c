@@ -79,6 +79,7 @@
  */
 
 #include "background.h"
+#include "longrange.h"
 
 /**
  * Background quantities at given conformal time tau.
@@ -423,6 +424,31 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_fld];
     p_tot += w_fld * pvecback[pba->index_bg_rho_fld];
     dp_dloga += (a*dw_over_da-3*(1+w_fld)*w_fld)*pvecback[pba->index_bg_rho_fld];
+  }
+
+  /* scalar mediating long range interactions */
+  /* We will also include the fermion energy density */
+  if (pba->has_lrs == _TRUE_) {
+    double T_F = pba->lrs_T_F * (pba->T_cmb * _k_B_ / _eV_) / a_rel; // Fermion temperature [eV]
+    double phi_M = getphi_M(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F); // Scalar field times mass [eV^2]
+    
+    double rho_phi = _eV4_to_rho_class * 0.5 * pow(phi_M, 2);
+    double rho_F = _eV4_to_rho_class * getrhoF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M);
+
+    double p_phi = -rho_phi;
+    double p_F = _eV4_to_rho_class * getPF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M);
+
+    pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
+    pvecback[pba->index_bg_p_lrs] = p_phi + p_F;
+
+    rho_tot += pvecback[pba->index_bg_rho_lrs];
+    p_tot += pvecback[pba->index_bg_p_lrs];
+    dp_dloga += _eV4_to_rho_class * (- phi_M * getdphiM_dloga(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M)
+		 		     + getdPF_dloga(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M));
+
+   /* Define the relativistic and non-relativistic contributions of fermions to rho as in ncdm */
+    rho_r += 3.* p_F;
+    rho_m += rho_F - 3.* p_F;
   }
 
   /* relativistic neutrinos (and all relativistic relics) */
@@ -882,6 +908,7 @@ int background_indices(
   pba->has_scf = _FALSE_;
   pba->has_lambda = _FALSE_;
   pba->has_fld = _FALSE_;
+  pba->has_lrs = _FALSE_;
   pba->has_ur = _FALSE_;
   pba->has_idr = _FALSE_;
   pba->has_idm_dr = _FALSE_;
@@ -907,6 +934,9 @@ int background_indices(
 
   if (pba->Omega0_fld != 0.)
     pba->has_fld = _TRUE_;
+
+  if (pba->lrs_g_over_M > 1e-10)
+    pba->has_lrs = _TRUE_;
 
   if (pba->Omega0_ur != 0.)
     pba->has_ur = _TRUE_;
@@ -972,6 +1002,10 @@ int background_indices(
   /* - index for fluid */
   class_define_index(pba->index_bg_rho_fld,pba->has_fld,index_bg,1);
   class_define_index(pba->index_bg_w_fld,pba->has_fld,index_bg,1);
+
+  /* - index for long range scalar */
+  class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
 
   /* - index for ultra-relativistic neutrinos/species */
   class_define_index(pba->index_bg_rho_ur,pba->has_ur,index_bg,1);
@@ -2267,6 +2301,8 @@ int background_output_titles(struct background * pba,
   class_store_columntitle(titles,"(.)rho_dcdm",pba->has_dcdm);
   class_store_columntitle(titles,"(.)rho_dr",pba->has_dr);
 
+  class_store_columntitle(titles,"(.)rho_lrs",pba->has_lrs);
+
   class_store_columntitle(titles,"(.)rho_scf",pba->has_scf);
   class_store_columntitle(titles,"(.)p_scf",pba->has_scf);
   class_store_columntitle(titles,"(.)p_prime_scf",pba->has_scf);
@@ -2325,6 +2361,9 @@ int background_output_data(
     class_store_double(dataptr,pvecback[pba->index_bg_rho_crit],_TRUE_,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_dcdm],pba->has_dcdm,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_rho_dr],pba->has_dr,storeidx);
+
+    class_store_double(dataptr,pvecback[pba->index_bg_rho_lrs],pba->has_lrs,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_p_lrs],pba->has_lrs,storeidx);
 
     class_store_double(dataptr,pvecback[pba->index_bg_rho_scf],pba->has_scf,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_p_scf],pba->has_scf,storeidx);
@@ -2669,6 +2708,10 @@ int background_output_budget(
       _class_print_species_("Spatial Curvature",k);
       budget_other+=pba->Omega0_k;
     }
+    if(pba->has_lrs){
+      _class_print_species_("Scalar mediating long range self-interaction",fld);
+      budget_other+=pba->Omega0_lrs;
+    }
 
     printf(" ---> Total budgets \n");
     printf(" Radiation                        Omega = %-15g , omega = %-15g \n",budget_radiation,budget_radiation*pba->h*pba->h);
@@ -2676,7 +2719,7 @@ int background_output_budget(
     if(pba->N_ncdm > 0){
       printf(" Neutrinos                        Omega = %-15g , omega = %-15g \n",budget_neutrino,budget_neutrino*pba->h*pba->h);
     }
-    if(pba->has_lambda || pba->has_fld || pba->has_scf || pba->has_curvature){
+    if(pba->has_lambda || pba->has_fld || pba->has_scf || pba->has_curvature || pba->has_lrs){
       printf(" Other Content                    Omega = %-15g , omega = %-15g \n",budget_other,budget_other*pba->h*pba->h);
     }
     printf(" TOTAL                            Omega = %-15g , omega = %-15g \n",budget_radiation+budget_matter+budget_neutrino+budget_other,(budget_radiation+budget_matter+budget_neutrino+budget_other)*pba->h*pba->h);
