@@ -429,26 +429,52 @@ int background_functions(
   /* scalar mediating long range interactions */
   /* We will also include the fermion energy density */
   if (pba->has_lrs == _TRUE_) {
-    double T_F = pba->lrs_T_F * (pba->T_cmb * _k_B_ / _eV_) / a_rel; // Fermion temperature [eV]
-    double phi_M = getphi_M(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F); // Scalar field times mass [eV^2]
+    /* Scalar quantitites */
+    double phi_M; // Scalar field times mass [eV^2]
+    class_call(getPhi_M(pba, 1./a_rel-1., &phi_M),
+	       pba->error_message,
+	       pba->error_message);
     
-    double rho_phi = _eV4_to_rho_class * 0.5 * pow(phi_M, 2);
-    double rho_F = _eV4_to_rho_class * getrhoF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M);
-
+    double mT_over_T0 = get_mT_over_T0(pba, phi_M);
+    pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0;
+    double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
     double p_phi = -rho_phi;
-    double p_F = _eV4_to_rho_class * getPF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M);
 
+    /* Fermion quantities */
+    double rho_F, p_F, pseudo_p_F, I1, I2;
+    class_call(background_lrs_momenta(
+				       pba->q_lrs_bg,
+				       pba->w_lrs_bg,
+				       pba->q_size_lrs_bg,
+				       mT_over_T0,
+				       pba->factor_lrs,
+				       1./a_rel-1.,
+				       &rho_F,
+				       &p_F,
+				       NULL,
+				       &pseudo_p_F,
+				       &I1,
+				       &I2),
+	       pba->error_message,
+	       pba->error_message);
+    pvecback[pba->index_bg_rho_lrs_F] = rho_F;
+    pvecback[pba->index_bg_p_lrs_F] = p_F;
+    pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;    /* Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935 */
+    
+    /* Add up scalar and fermion */
     pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
     pvecback[pba->index_bg_p_lrs] = p_phi + p_F;
-
+    
     rho_tot += pvecback[pba->index_bg_rho_lrs];
     p_tot += pvecback[pba->index_bg_p_lrs];
-    dp_dloga += _eV4_to_rho_class * (- phi_M * getdphiM_dloga(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M)
-		 		     + getdPF_dloga(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M));
-
-   /* Define the relativistic and non-relativistic contributions of fermions to rho as in ncdm */
+    /* Define the relativistic and non-relativistic contributions of fermions to rho as in ncdm */
     rho_r += 3.* p_F;
     rho_m += rho_F - 3.* p_F;
+
+    dp_dloga += pseudo_p_F - 5*p_F; // Fermion contribution
+    dp_dloga += 1./3. * SQR(SQR(pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_)) * _J4_to_rho_class * // T^4, in rho_class units
+      SQR(pba->lrs_g_over_M * pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_ * I1) / // (g/M * T * I_1)^2, internally everything in eV
+      (1 + SQR(pba->lrs_g_over_M * pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_) * I2); // 1+(g/M * T)^2 * I_2, internally everything in eV
   }
 
   /* relativistic neutrinos (and all relativistic relics) */
@@ -508,7 +534,7 @@ int background_functions(
 
   /** - compute relativistic density to total density ratio */
   pvecback[pba->index_bg_Omega_r] = rho_r / rho_crit;
-
+  
   /** - compute other quantities in the exhaustive, redundant format */
   if (return_format == pba->long_info) {
 
@@ -659,7 +685,7 @@ int background_init(
     printf("Computing background\n");
 
     /* below we want to inform the user about ncdm species and/or the total N_eff */
-    if ((pba->N_ncdm > 0) || (pba->Omega0_idr != 0.))  {
+    if ((pba->N_ncdm > 0) || (pba->Omega0_idr != 0.) || (pba->lrs_g_over_M > 1e-10))  {
 
       /* contribution of ultra-relativistic species _ur to N_eff */
       Neff = pba->Omega0_ur/7.*8./pow(4./11.,4./3.)/pba->Omega0_g;
@@ -715,8 +741,39 @@ int background_init(
         printf(" -> dark radiation Delta Neff %e\n",N_dark);
       }
 
-      printf(" -> total N_eff = %g (sumed over ultra-relativistic species, ncdm and dark radiation)\n",Neff);
+      double rho_F_rel;
+      /* contribution of lrs to N_eff */
+      /* call this function to get rho_F */
+      background_ncdm_momenta(pba->q_lrs_bg,
+			      pba->w_lrs_bg,
+			      pba->q_size_lrs_bg,
+			      0.,
+			      pba->factor_lrs,
+			      0.,
+			      NULL,
+			      &rho_F_rel,
+			      NULL,
+			      NULL,
+			      NULL);
 
+      /* inform user of the contribution of each species to
+	 radiation density (in relativistic limit): should be
+	 between 1.01 and 1.02 for each active neutrino species;
+	 evaluated as rho_F/rho_nu_rel where rho_nu_rel is the
+	 density of one neutrino in the instantaneous decoupling
+	 limit, i.e. assuming T_nu=(4/11)^1/3 T_gamma (this comes
+	 from the definition of N_eff) */
+      rho_nu_rel = 56.0/45.0*pow(_PI_,6)*pow(4.0/11.0,4.0/3.0)*_G_/pow(_h_P_,3)/pow(_c_,7)*
+	pow(_Mpc_over_m_,2)*pow(pba->T_cmb*_k_B_,4);
+
+      printf(" -> long-range interacting fermion sampled with %d (resp. %d) points for purpose of background (resp. perturbation) integration. In the relativistic limit it gives Delta N_eff = %g\n",
+	     pba->q_size_lrs_bg,
+	     pba->q_size_lrs,
+	     rho_F_rel/rho_nu_rel);
+
+      Neff += rho_F_rel/rho_nu_rel;
+
+      printf(" -> total N_eff = %g (sumed over ultra-relativistic species, ncdm, dark radiation and long-range interacting fermions)\n",Neff);
     }
   }
 
@@ -872,6 +929,14 @@ int background_free_input(
       free(pba->ncdm_psd_parameters);
   }
 
+  if (pba->has_lrs){
+    free(pba->q_lrs);
+    free(pba->w_lrs);
+    free(pba->q_lrs_bg);
+    free(pba->w_lrs_bg);
+    free(pba->dlnf0_dlnq_lrs);
+  }
+
   if (pba->Omega0_scf != 0.){
     if (pba->scf_parameters != NULL)
       free(pba->scf_parameters);
@@ -1006,6 +1071,10 @@ int background_indices(
   /* - index for long range scalar */
   class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_rho_lrs_F,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_p_lrs_F,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_pseudo_p_lrs_F,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_mT_over_T0_lrs,pba->has_lrs,index_bg,1);
 
   /* - index for ultra-relativistic neutrinos/species */
   class_define_index(pba->index_bg_rho_ur,pba->has_ur,index_bg,1);
@@ -1998,6 +2067,7 @@ int background_initial_conditions(
   double a;
 
   double rho_ncdm, p_ncdm, rho_ncdm_rel_tot=0.;
+  double rho_lrs, p_lrs, rho_lrs_rel_tot=0.;
   double f,Omega_rad, rho_rad;
   int counter,is_early_enough,n_ncdm;
   double scf_lambda;
@@ -2048,6 +2118,49 @@ int background_initial_conditions(
                "Search for initial scale factor a such that all ncdm species are relativistic failed.");
   }
 
+  /**  If we have long-range interacting species, perhaps we need to start earlier
+       than the standard value for the species to be relativistic.
+       This could happen for some WDM models.
+  */
+
+  if (pba->has_lrs == _TRUE_) {
+    for (counter=0; counter < _MAX_IT_; counter++) {
+      is_early_enough = _TRUE_;
+      rho_lrs_rel_tot = 0.;
+
+      double phi_M; // Scalar field times mass [eV^2]
+      class_call(getPhi_M(pba, pba->a_today/a-1.0, &phi_M),
+		 pba->error_message,
+		 pba->error_message); 
+
+      class_call(background_lrs_momenta(pba->q_lrs_bg,
+					pba->w_lrs_bg,
+					pba->q_size_lrs_bg,
+					get_mT_over_T0(pba, phi_M),
+					pba->factor_lrs,
+					pba->a_today/a-1.0,
+					&rho_lrs,
+					&p_lrs,
+					NULL,
+					NULL,
+					NULL,
+					NULL),
+		 pba->error_message,
+		 pba->error_message);
+      rho_lrs_rel_tot += 3.*p_lrs;
+      if (fabs(p_lrs/rho_lrs-1./3.)>ppr->tol_lrs_initial_w)
+	is_early_enough = _FALSE_;
+      
+      if (is_early_enough == _TRUE_)
+        break;
+      else
+        a *= _SCALE_BACK_;
+    }
+    class_test(counter == _MAX_IT_,
+               pba->error_message,
+               "Search for initial scale factor a such that all long-range interacting species are relativistic failed.");
+  }
+
   pvecback_integration[pba->index_bi_a] = a;
 
   /* Set initial values of {B} variables: */
@@ -2060,6 +2173,10 @@ int background_initial_conditions(
   if (pba->has_ncdm == _TRUE_){
     /** - We must add the relativistic contribution from NCDM species */
     rho_rad += rho_ncdm_rel_tot;
+  }
+  if (pba->has_lrs == _TRUE_){
+    /** - We must add the relativistic contribution from lrs species */
+    rho_rad += rho_lrs_rel_tot;
   }
   if (pba->has_dcdm == _TRUE_){
     /* Remember that the critical density today in CLASS conventions is H0^2 */
@@ -2302,6 +2419,8 @@ int background_output_titles(struct background * pba,
   class_store_columntitle(titles,"(.)rho_dr",pba->has_dr);
 
   class_store_columntitle(titles,"(.)rho_lrs",pba->has_lrs);
+  class_store_columntitle(titles,"(.)p_lrs",pba->has_lrs);
+  class_store_columntitle(titles,"(.)mT_over_T0_lrs",pba->has_lrs);
 
   class_store_columntitle(titles,"(.)rho_scf",pba->has_scf);
   class_store_columntitle(titles,"(.)p_scf",pba->has_scf);
@@ -2364,6 +2483,7 @@ int background_output_data(
 
     class_store_double(dataptr,pvecback[pba->index_bg_rho_lrs],pba->has_lrs,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_p_lrs],pba->has_lrs,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_mT_over_T0_lrs],pba->has_lrs,storeidx);
 
     class_store_double(dataptr,pvecback[pba->index_bg_rho_scf],pba->has_scf,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_p_scf],pba->has_scf,storeidx);

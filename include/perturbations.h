@@ -32,6 +32,7 @@ enum tca_idm_dr_flags {tca_idm_dr_on, tca_idm_dr_off};
 enum rsa_idr_flags {rsa_idr_off, rsa_idr_on};
 enum ufa_flags {ufa_off, ufa_on};
 enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
+enum lrsfa_flags {lrsfa_off, lrsfa_on};
 
 //@}
 
@@ -47,6 +48,7 @@ enum idr_method {idr_free_streaming,idr_fluid}; /* for the idm-idr case */
 enum rsa_idr_method {rsa_idr_none,rsa_idr_MD};  /* for the idm-idr case */
 enum ufa_method {ufa_mb,ufa_hu,ufa_CLASS,ufa_none};
 enum ncdmfa_method {ncdmfa_mb,ncdmfa_hu,ncdmfa_CLASS,ncdmfa_none};
+enum lrsfa_method {lrsfa_mb,lrsfa_hu,lrsfa_CLASS,lrsfa_none};
 enum tensor_methods {tm_photons_only,tm_massless_approximation,tm_exact};
 
 //@}
@@ -127,6 +129,7 @@ struct perturbs
 
   short evolve_tensor_ur;             /**< will we evolve ur tensor perturbations (either because we have ur species, or we have ncdm species with massless approximation) ? */
   short evolve_tensor_ncdm;             /**< will we evolve ncdm tensor perturbations (if we have ncdm species and we use the exact method) ? */
+  short evolve_tensor_lrs;             /**< will we evolve lrs tensor perturbations (if we have lrs species and we use the exact method) ? */
 
   short has_cl_cmb_temperature;       /**< do we need \f$ C_l \f$'s for CMB temperature? */
   short has_cl_cmb_polarization;      /**< do we need \f$ C_l \f$'s for CMB polarization? */
@@ -245,6 +248,7 @@ struct perturbs
   short has_source_delta_idr;   /**< do we need source for delta of interacting dark radiation? */
   short has_source_delta_idm_dr;/**< do we need source for delta of interacting dark matter (with dr)? */
   short has_source_delta_ncdm;  /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
+  short has_source_delta_lrs;  /**< do we need source for delta of scalar-mediated long range interaction? */
   short has_source_theta_m;     /**< do we need source for theta of total matter? */
   short has_source_theta_cb;    /**< do we ALSO need source for theta of ONLY cdm and baryon? */
   short has_source_theta_tot;   /**< do we need source for theta total? */
@@ -259,6 +263,7 @@ struct perturbs
   short has_source_theta_idr;   /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr;/**< do we need source for theta of interacting dark matter (with dr)? */
   short has_source_theta_ncdm;  /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
+  short has_source_theta_lrs;  /**< do we need source for theta of scalar-mediated long range interaction? */
   short has_source_phi;         /**< do we need source for metric fluctuation phi? */
   short has_source_phi_prime;   /**< do we need source for metric fluctuation phi'? */
   short has_source_phi_plus_psi;/**< do we need source for metric fluctuation (phi+psi)? */
@@ -292,6 +297,7 @@ struct perturbs
   int index_tp_delta_idr; /**< index value for delta of interacting dark radiation */
   int index_tp_delta_idm_dr;/**< index value for delta of interacting dark matter (with dr)*/
   int index_tp_delta_ncdm1; /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
+  int index_tp_delta_lrs; /**< index value for delta of scalar-mediated long range interacting system */
   int index_tp_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_tp_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
 
@@ -309,6 +315,7 @@ struct perturbs
   int index_tp_theta_idm_dr;/**< index value for theta of interacting dark matter (with dr)*/
   int index_tp_theta_dr;    /**< index value for F1 of decay radiation */
   int index_tp_theta_ncdm1; /**< index value for theta of first non-cold dark matter species (e.g. massive neutrinos) */
+  int index_tp_theta_lrs;   /**< index value for theta of scalar-mediated long range interacting system */
 
   int index_tp_phi;          /**< index value for metric fluctuation phi */
   int index_tp_phi_prime;    /**< index value for metric fluctuation phi' */
@@ -491,9 +498,12 @@ struct perturb_vector
   int index_pt_F0_dr;
   int l_max_dr;          /**< max momentum in Boltzmann hierarchy for dr) */
   int index_pt_psi0_ncdm1; /**< first multipole of perturbation of first ncdm species, Psi_0 */
+  int index_pt_psi0_lrs; /**< first multipole of perturbation of lrs, Psi_0 */
   int N_ncdm;		/**< number of distinct non-cold-dark-matter (ncdm) species */
   int* l_max_ncdm;	/**< mutipole l at which Boltzmann hierarchy is truncated (for each ncdm species) */
   int* q_size_ncdm;	/**< number of discrete momenta (for each ncdm species) */
+  int l_max_lrs;	/**< mutipole l at which Boltzmann hierarchy is truncated */
+  int q_size_lrs;	/**< number of discrete momenta */
 
   int index_pt_eta;       /**< synchronous gauge metric perturbation eta*/
   int index_pt_phi;	      /**< newtonian gauge metric perturbation phi */
@@ -582,6 +592,10 @@ struct perturb_workspace
   double * theta_ncdm;	/**< velocity divergence theta of each ncdm species */
   double * shear_ncdm;	/**< shear for each ncdm species */
 
+  double delta_lrs;	/**< relative density perturbation of scalar-mediated long range interaction */
+  double theta_lrs;	/**< velocity divergence theta of scalar-mediated long range interaction */
+  double shear_lrs;	/**< shear for scalar-mediated long range interaction */
+
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */
 
@@ -620,6 +634,7 @@ struct perturb_workspace
   int index_ap_rsa_idr; /**< index for dark radiation streaming approximation */
   int index_ap_ufa; /**< index for ur fluid approximation */
   int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
+  int index_ap_lrsfa; /**< index for lrs fluid approximation */
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */

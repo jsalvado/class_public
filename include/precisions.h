@@ -75,6 +75,34 @@ class_precision_parameter(Omega0_cdm_min_synchronous,double,1.e-10)
  */
 class_string_parameter(sBBN_file,"/bbn/sBBN_2017.dat","sBBN file")
 
+/* Quantitites for the scalar-mediated long range interaction */
+/**
+ * Tolerance on the relative precision of the integration over
+ * long-range interacting fermion phase-space distributions.
+ */
+class_precision_parameter(tol_lrs,double,1.e-3)
+/**
+ * Tolerance on the relative precision of the integration over
+ * long-range interacting fermion phase-space distributions in the synchronous gauge.
+ */
+class_precision_parameter(tol_lrs_synchronous,double,1.e-3)
+/**
+ * Tolerance on the relative precision of the integration over
+ * long-range interacting fermion phase-space distributions in the newtonian gauge.
+ */
+class_precision_parameter(tol_lrs_newtonian,double,1.e-5)
+/**
+ * Tolerance on the relative precision of the integration over
+ * long-range interacting fermion phase-space distributions during the background evolution.
+ */
+class_precision_parameter(tol_lrs_bg,double,1.e-5)
+/**
+ * Tolerance on the initial deviation of long-range interacting fermion from being fully relativistic.
+ * Using w = pressure/density, this quantifies the maximum deviation from 1/3. (for relativistic species)
+ */
+class_precision_parameter(tol_lrs_initial_w,double,1.e-3)
+
+
 /*
  *  Thermodynamical quantities
  * */
@@ -212,6 +240,7 @@ class_precision_parameter(l_max_dr,int,17)   /**< number of momenta in Boltzmann
 class_precision_parameter(l_max_ur,int,17)   /**< number of momenta in Boltzmann hierarchy for relativistic neutrino/relics (scalar), at least 4 */
 class_precision_parameter(l_max_idr,int,17)   /**< number of momenta in Boltzmann hierarchy for interacting dark radiation */
 class_precision_parameter(l_max_ncdm,int,17)   /**< number of momenta in Boltzmann hierarchy for relativistic neutrino/relics (scalar), at least 4 */
+class_precision_parameter(l_max_lrs,int,17)   /**< number of momenta in Boltzmann hierarchy for scalar-mediated long range interactions (scalar), at least 4 */
 class_precision_parameter(l_max_g_ten,int,5)     /**< number of momenta in Boltzmann hierarchy for photon temperature (tensor), at least 4 */
 class_precision_parameter(l_max_pol_g_ten,int,5) /**< number of momenta in Boltzmann hierarchy for photon polarization (tensor), at least 4 */
 
@@ -285,11 +314,15 @@ class_precision_parameter(ur_fluid_trigger_tau_over_tau_k,double,30.0)
 
 class_precision_parameter(ncdm_fluid_approximation,int,ncdmfa_CLASS) /**< method for non-cold dark matter fluid approximation */
 
+class_precision_parameter(lrs_fluid_approximation,int,ncdmfa_CLASS) /**< method for scalar-mediated long range interaction fluid approximation */
+
 /**
  * when to switch off ncdm (massive neutrinos / non-cold
  * relics) fluid approximation
  */
 class_precision_parameter(ncdm_fluid_trigger_tau_over_tau_k,double,31.0)
+
+class_precision_parameter(lrs_fluid_trigger_tau_over_tau_k,double,32.0)
 
 /**
  * whether CMB source functions can be approximated as zero when

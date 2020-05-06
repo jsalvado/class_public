@@ -3153,7 +3153,7 @@ int thermodynamics_recombination_with_hyrec(
 
   param.T0 = pba->T_cmb;
   param.obh2 = pba->Omega0_b*pba->h*pba->h;
-  param.omh2 = (pba->Omega0_b+pba->Omega0_cdm+pba->Omega0_idm_dr+pba->Omega0_ncdm_tot)*pba->h*pba->h;
+  param.omh2 = (pba->Omega0_b+pba->Omega0_cdm+pba->Omega0_idm_dr+pba->Omega0_ncdm_tot+pba->Omega0_lrs)*pba->h*pba->h;
   param.okh2 = pba->Omega0_k*pba->h*pba->h;
   param.odeh2 = (pba->Omega0_lambda+pba->Omega0_fld)*pba->h*pba->h;
   class_call(background_w_fld(pba,pba->a_today,&w_fld,&dw_over_da_fld,&integral_fld), pba->error_message, pth->error_message);

@@ -1253,11 +1253,52 @@ int input_read_parameters(
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
 
+  // Tolerance
+  if (ppt->gauge == synchronous)
+    ppr->tol_lrs = ppr->tol_lrs_synchronous;
+  if (ppt->gauge == newtonian)
+    ppr->tol_lrs = ppr->tol_lrs_newtonian;
+  // Quadrature modes, 0 is qm_auto
+  class_read_int("Quadrature strategy",pba->lrs_quadrature_strategy);
+  // Number of momentum bins
+  class_read_int("Number of momentum bins",pba->lrs_input_q_size);
+  // qmax, if relevant
+  class_read_double("Maximum q",pba->lrs_qmax);
+
   if (pba->lrs_g_over_M > 1e-10){
-    double T_F = pba->lrs_T_F * (pba->T_cmb * _k_B_ / _eV_); // Fermion temperature [eV]
-    double phi_M = getphi_M(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F); // Scalar field times mass [eV^2]
-    pba->Omega0_lrs = _eV4_to_rho_class * (0.5 * pow(phi_M, 2) + 
-					   getrhoF(pba->lrs_m_F, pba->lrs_g_over_M, pba->lrs_g_F, T_F, phi_M)) / pow(pba->H0, 2);
+    // Compute m_F over the *current* fermion temperature
+    pba->lrs_m_F_over_T0 = pba->lrs_m_F * _eV_ / (_k_B_*pba->lrs_T_F*pba->T_cmb);
+    
+    // Init
+    class_call(background_lrs_init(ppr, pba),
+	       pba->error_message,
+	       errmsg);
+
+    // Compute Omega_0
+    double phi_M; // Scalar field times mass [eV^2]
+    class_call(getPhi_M(pba, 0, &phi_M),
+	       pba->error_message,
+	       pba->error_message); 
+    double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+
+    double rho_F;
+    class_call(background_lrs_momenta(
+				       pba->q_lrs_bg,
+				       pba->w_lrs_bg,
+				       pba->q_size_lrs_bg,
+				       get_mT_over_T0(pba, phi_M),
+				       pba->factor_lrs,
+				       0,
+				       &rho_F,
+				       NULL,
+				       NULL,
+				       NULL,
+				       NULL,
+				       NULL),
+	       pba->error_message,
+	       pba->error_message);
+
+    pba->Omega0_lrs = (rho_phi + rho_F)/SQR(pba->H0);
     Omega_tot += pba->Omega0_lrs;
   }
 
@@ -2999,6 +3040,23 @@ int input_read_parameters(
                errmsg,
                "please choose different values for precision parameters dark_radiation_trigger_tau_over_tau_k and ncdm_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
   }
+  if (pba->lrs_g_over_M > 1e-10){
+    class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->radiation_streaming_trigger_tau_over_tau_k,
+               errmsg,
+               "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and radiation_streaming_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
+
+    class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->ur_fluid_trigger_tau_over_tau_k,
+               errmsg,
+               "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and ur_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
+    
+    class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->ncdm_fluid_trigger_tau_over_tau_k,
+               errmsg,
+               "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and ncdm_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
+    class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->idr_streaming_trigger_tau_over_tau_k,
+               errmsg,
+               "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and idr_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
+  }  
+
 
 
   /**
@@ -3221,11 +3279,17 @@ int input_default_params(
   pba->lrs_g_over_M = 0.;
   pba->lrs_g_F = 0;
   pba->lrs_T_F = 0.;
+  pba->lrs_m_F_over_T0 = 0.;
+  pba->Omega0_lrs = 0.;
+  pba->lrs_quadrature_strategy = 0;
+  pba->lrs_input_q_size = -1;
+  pba->lrs_qmax = 15.;
+
 
   pba->Omega0_k = 0.;
   pba->K = 0.;
   pba->sgnK = 0;
-  pba->Omega0_lambda = 1.-pba->Omega0_k-pba->Omega0_g-pba->Omega0_ur-pba->Omega0_b-pba->Omega0_cdm-pba->Omega0_ncdm_tot-pba->Omega0_dcdmdr-pba->Omega0_idm_dr-pba->Omega0_idr;
+  pba->Omega0_lambda = 1.-pba->Omega0_k-pba->Omega0_g-pba->Omega0_ur-pba->Omega0_b-pba->Omega0_cdm-pba->Omega0_ncdm_tot-pba->Omega0_dcdmdr-pba->Omega0_idm_dr-pba->Omega0_idr-pba->Omega0_lrs;
   pba->Omega0_fld = 0.;
   pba->a_today = 1.;
   pba->use_ppf = _TRUE_;
@@ -3314,6 +3378,7 @@ int input_default_params(
   ppt->tensor_method = tm_massless_approximation;
   ppt->evolve_tensor_ur = _FALSE_;
   ppt->evolve_tensor_ncdm = _FALSE_;
+  ppt->evolve_tensor_lrs = _FALSE_;
 
   ppt->has_scalars=_TRUE_;
   ppt->has_vectors=_FALSE_;

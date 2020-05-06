@@ -61,8 +61,6 @@ struct background
 
   double Omega0_fld; /**< \f$ \Omega_{0 de} \f$: fluid */
 
-  double Omega0_lrs; /**< \f$ \Omega_{0 lrs} \f$: scalar sourcing long-range interaction */
-
   enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
 
   double w0_fld; /**< \f$ w0_{DE} \f$: current fluid equation of state parameter */
@@ -87,6 +85,10 @@ struct background
   double lrs_g_over_M; /**< Coupling divided by scalar mass */
   int lrs_g_F; /**< Number of degrees of freedom of fermion sourcing the long range interaction */
   double lrs_T_F; /**< Ratio between fermion and photon temperatures */
+  
+  double Omega0_lrs; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
+  double lrs_m_F_over_T0; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
+  
 
   double Omega0_ur; /**< \f$ \Omega_{0 \nu r} \f$: ultra-relativistic neutrinos */
 
@@ -204,6 +206,10 @@ struct background
 
   int index_bg_rho_lrs;       /**< density of the fermion+scalar system in the presence of a long-range self interaction */
   int index_bg_p_lrs;         /**< pressure of the fermion+scalar system in the presence of a long-range self interaction */
+  int index_bg_rho_lrs_F;     /**< density of the fermion in the presence of a long-range self interaction */
+  int index_bg_p_lrs_F;       /**< pressure of the fermion in the presence of a long-range self interaction */
+  int index_bg_pseudo_p_lrs_F;/**< pseudo-pressure of the fermion in the presence of a long-range self interaction */
+  int index_bg_mT_over_T0_lrs;/**< effective fermion mass divided by its **current day** temperature */
 
   int index_bg_phi_scf;       /**< scalar field value */
   int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
@@ -339,6 +345,28 @@ struct background
   double * factor_ncdm; /**< List of normalization factors for calculating energy density etc.*/
 
   //@}
+
+
+  /**
+   *@name - arrays related to sampling and integration of lrs phase space distributions
+   */
+
+
+  //@{
+  int lrs_quadrature_strategy; /**< Quadrature strategy. */
+  int lrs_input_q_size; /**< Number of lrs bins */
+  double lrs_qmax;   /**< Maximum value of q */
+  double * q_lrs;     /**< Vectors of perturbation sampling in q */
+  double * w_lrs;     /**< Vectors of corresponding quadrature weights w */
+  double * q_lrs_bg;     /**< Vectors of background sampling in q */
+  double * w_lrs_bg;     /**< Vectors of corresponding quadrature weights w */
+  double * dlnf0_dlnq_lrs; /**< Vectors of logarithmic derivatives of p-s-d */
+  int q_size_lrs_bg;    /**< Size of the q_lrs_bg array */
+  int q_size_lrs;    /**< Size of the q_lrs array */
+  double factor_lrs; /**< Normalization factors for calculating energy density etc.*/
+
+  //@}
+
 
   /**
    *@name - some flags needed for calling background functions
