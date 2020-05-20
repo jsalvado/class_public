@@ -85,6 +85,7 @@ struct background
   double lrs_g_over_M; /**< Coupling divided by scalar mass */
   int lrs_g_F; /**< Number of degrees of freedom of fermion sourcing the long range interaction */
   double lrs_T_F; /**< Ratio between fermion and photon temperatures */
+  double lrs_M_phi; /**< Scalar field mass: d^2V/dphi^2*/
   
   double Omega0_lrs; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
   double lrs_m_F_over_T0; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
@@ -207,6 +208,7 @@ struct background
   int index_bg_rho_lrs;       /**< density of the fermion+scalar system in the presence of a long-range self interaction */
   int index_bg_p_lrs;         /**< pressure of the fermion+scalar system in the presence of a long-range self interaction */
   int index_bg_rho_lrs_F;     /**< density of the fermion in the presence of a long-range self interaction */
+  int index_bg_lrs_phi_prime; /**< lrs scalar field prime*/
   int index_bg_p_lrs_F;       /**< pressure of the fermion in the presence of a long-range self interaction */
   int index_bg_pseudo_p_lrs_F;/**< pseudo-pressure of the fermion in the presence of a long-range self interaction */
   int index_bg_mT_over_T0_lrs;/**< effective fermion mass divided by its **current day** temperature */

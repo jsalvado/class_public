@@ -2563,7 +2563,6 @@ int perturb_workspace_init(
       class_define_index(ppw->index_mt_eta_prime,_TRUE_,index_mt,1);     /* eta' */
       class_define_index(ppw->index_mt_alpha,_TRUE_,index_mt,1);         /* alpha = (h' + 6 tau') / (2 k**2) */
       class_define_index(ppw->index_mt_alpha_prime,_TRUE_,index_mt,1);   /* alpha' */
-
     }
 
   }
@@ -3817,6 +3816,11 @@ int perturb_vector_init(
       class_define_index(ppv->index_pt_Gamma_fld,pba->has_fld,index_pt,1); /* Gamma variable of PPF scheme */
     }
 
+    /* lrs field equation */
+    class_define_index(ppv->index_pt_lrs,_TRUE_,index_pt,1);       /* lrs  jordi*/
+    class_define_index(ppv->index_pt_lrs_prime,_TRUE_,index_pt,1); /* lrs' jordi*/
+
+    
     /* scalar field */
 
     class_define_index(ppv->index_pt_phi_scf,pba->has_scf,index_pt,1); /* scalar field density */
@@ -6697,7 +6701,7 @@ int perturb_einstein(
       /* first equation involving total density fluctuation */
       ppw->pvecmetric[ppw->index_mt_h_prime] =
         ( k2 * s2_squared * y[ppw->pv->index_pt_eta] + 1.5 * a2 * ppw->delta_rho)/(0.5*a_prime_over_a);  /* h' */
-
+      
       /* eventually, infer radiation streaming approximation for
          gamma and ur (this is exactly the right place to do it
          because the result depends on h_prime) */
@@ -9483,6 +9487,27 @@ int perturb_derivs(double tau,
 
     }
 
+    /* jordi */
+    if (pba->has_lrs == _TRUE_){
+      double Mphi2_in_Mpc2=pba->lrs_M_phi*pba->lrs_M_phi*_Mpc_over_eV*_Mpc_over_eV;
+      /* Derivative of the field value */
+      dy[pv->index_pt_lrs] = y[pv->index_pt_lrs_prime];
+      /* Second derivative of the field Klein Gordon equation */
+      double p_lrs_bg=pvecback[pba->index_bg_p_lrs_F];
+      double rho_lrs_bg=pvecback[pba->index_bg_rho_lrs_F];
+      
+      double w_lrs = p_lrs_bg/rho_lrs_bg;
+      double pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
+      double cg2_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
+
+	
+      dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
+	- metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric(I guess units are fine)
+	- (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Unist probably ok)
+        - a2*(pba->lrs_g_over_M*(rho_lrs_bg*y[pv->index_pt_psi0_lrs] - 3*cg2_lrs*rho_lrs_bg*y[pv->index_pt_psi0_lrs])
+	      -pba->lrs_g_over_M*pba->lrs_g_over_M*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])*y[pv->index_pt_lrs]); // (unist very likeliy whrong, in what unist shouldbe the g_over_M??
+    }
+    
     /** - ---> scalar field (scf) */
 
     if (pba->has_scf == _TRUE_) {

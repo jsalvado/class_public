@@ -459,8 +459,12 @@ int background_functions(
 	       pba->error_message);
     pvecback[pba->index_bg_rho_lrs_F] = rho_F;
     pvecback[pba->index_bg_p_lrs_F] = p_F;
-    pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;    /* Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935 */
     
+    pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;    /* Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935 */
+
+    //jordi
+    double T = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;
+    pvecback[pba->index_bg_lrs_phi_prime] = _Mpc_over_eV*(a_rel/pba->lrs_M_phi)*pvecback[pba->index_bg_H]*pba->lrs_g_over_M*pow(T,3)*I1/(1+pba->lrs_g_over_M*pba->lrs_g_over_M*T*T*I2);
     /* Add up scalar and fermion */
     pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
     pvecback[pba->index_bg_p_lrs] = p_phi + p_F;
@@ -1072,6 +1076,7 @@ int background_indices(
   class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_rho_lrs_F,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_lrs_phi_prime,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_pseudo_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_mT_over_T0_lrs,pba->has_lrs,index_bg,1);

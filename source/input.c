@@ -1250,6 +1250,7 @@ int input_read_parameters(
   /** - Long range interaction parameters */
   class_read_double("lrs_m_F",pba->lrs_m_F);
   class_read_double("lrs_g_over_M",pba->lrs_g_over_M);
+  class_read_double("lrs_M_phi",pba->lrs_M_phi);
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
 

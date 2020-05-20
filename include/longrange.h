@@ -11,7 +11,7 @@
 
 extern const double _eV4_to_rho_class;
 extern const double _J4_to_rho_class;
-
+extern const double _Mpc_over_eV;
 struct background_parameters_and_redshift {
   /* structures containing fixed input parameters (indices, ...) */
   struct background * pba;

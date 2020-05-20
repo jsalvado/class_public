@@ -487,7 +487,10 @@ struct perturb_vector
   int index_pt_shear_idr; /**< shear of interacting dark radiation */
   int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
   int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
+  int index_pt_lrs;       /**< lrs' jordi  */
+  int index_pt_lrs_prime; /**< lrs'' jordi */
 
+  
 /* perturbed recombination */
   int index_pt_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_pt_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
@@ -552,6 +555,7 @@ struct perturb_workspace
   int index_mt_hv_prime_prime;/**< Second derivative of Synchronous gauge vector metric perturbation \f$ h_v\f$ */
   int mt_size;                /**< size of metric perturbation vector */
 
+  
   //@}
 
   /** @name - value at a given time of all background/perturbed
