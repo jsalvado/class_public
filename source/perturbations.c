@@ -9500,12 +9500,14 @@ int perturb_derivs(double tau,
       double pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
       double cg2_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
 
-	
+      double g_over_mT=pba->lrs_g_over_M*pba->lrs_M_phi/((pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F);
+
+      
       dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
 	- metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric(I guess units are fine)
 	- (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Unist probably ok)
-        - a2*(pba->lrs_g_over_M*(rho_lrs_bg*y[pv->index_pt_psi0_lrs] - 3*cg2_lrs*rho_lrs_bg*y[pv->index_pt_psi0_lrs])
-	      -pba->lrs_g_over_M*pba->lrs_g_over_M*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])*y[pv->index_pt_lrs]); // (unist very likeliy whrong, in what unist shouldbe the g_over_M??
+        - a2*((g_over_mT/_Mpc_over_eV)*(rho_lrs_bg*y[pv->index_pt_psi0_lrs] - 3*cg2_lrs*rho_lrs_bg*y[pv->index_pt_psi0_lrs])
+	      -g_over_mT*g_over_mT*_Mpc_over_eV*_Mpc_over_eV*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs]); // Vaya tela con las unidades!!
     }
     
     /** - ---> scalar field (scf) */
