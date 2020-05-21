@@ -596,9 +596,10 @@ struct perturb_workspace
   double * theta_ncdm;	/**< velocity divergence theta of each ncdm species */
   double * shear_ncdm;	/**< shear for each ncdm species */
 
-  double delta_lrs;	/**< relative density perturbation of scalar-mediated long range interaction */
-  double theta_lrs;	/**< velocity divergence theta of scalar-mediated long range interaction */
-  double shear_lrs;	/**< shear for scalar-mediated long range interaction */
+  double delta_lrs_F;	/**< relative density perturbation of scalar-mediated long range interaction */
+  double delta_p_lrs_F; /**< relative density perturbation of scalar-mediated long range interaction */
+  double theta_lrs_F;	/**< velocity divergence theta of scalar-mediated long range interaction */
+  double shear_lrs_F;	/**< shear for scalar-mediated long range interaction */
 
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */

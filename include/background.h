@@ -211,6 +211,7 @@ struct background
   int index_bg_lrs_phi_prime; /**< lrs scalar field prime*/
   int index_bg_p_lrs_F;       /**< pressure of the fermion in the presence of a long-range self interaction */
   int index_bg_pseudo_p_lrs_F;/**< pseudo-pressure of the fermion in the presence of a long-range self interaction */
+  int index_bg_phi_M_lrs;/**< scalar field times its mass [eV^2] */
   int index_bg_mT_over_T0_lrs;/**< effective fermion mass divided by its **current day** temperature */
 
   int index_bg_phi_scf;       /**< scalar field value */
