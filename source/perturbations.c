@@ -7214,10 +7214,14 @@ int perturb_total_stress_energy(
 	rho_lrs_bg = ppw->pvecback[pba->index_bg_rho_lrs_F];
 	p_lrs_bg = ppw->pvecback[pba->index_bg_p_lrs_F];
 	pseudo_p_lrs = ppw->pvecback[pba->index_bg_pseudo_p_lrs_F];
-	
+
+	double g_over_mT = ppw->pvecback[pba->lrs_g_over_M]*ppw->pvecback[pba->lrs_M_phi]/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/ppw->pvecback[pba->lrs_m_F_over_T0])*ppw->pvecback[pba->lrs_m_F]); // 1/eV
+	double phi_prime = ppw->pvecback[pba->index_bg_phi_prime_scf]; // eV/Mpc
+	double H = ppw->pvecback[pba->index_bg_H]; // Mpc^-1
 	rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
 	w_lrs = p_lrs_bg/rho_lrs_bg;
-	cg2_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
+	cg2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs + g_over_mT*phi_prime/H * (1 - pseudo_p_lrs/p_lrs)) /
+	  (3*(1 + w_lrs) - g_over_mT*phi_prime/H * (1 - 3*w_lrs)); // Ivan: p_prime/rho_prime
 	if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
 	  ppw->theta_lrs_F = y[idx+1];
 	  ppw->shear_lrs_F = y[idx+2];
@@ -7279,7 +7283,7 @@ int perturb_total_stress_energy(
 	}
 	
 	ppw->delta_lrs_F = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
-	ppw->delta_p_lrs_F = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
+	ppw->delta_p_lrs_F = delta_p_lrs;
 	
 	ppw->delta_rho += rho_delta_lrs;
 	ppw->rho_plus_p_theta += rho_plus_p_theta_lrs;
@@ -7599,6 +7603,7 @@ int perturb_total_stress_energy(
     }
 
     /** - --> lrs contribution to gravitational wave source: */
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
     if (ppt->evolve_tensor_lrs == _TRUE_){
 
       idx = ppw->pv->index_pt_psi0_lrs;
@@ -8075,6 +8080,7 @@ int perturb_sources(
     }
 
     /* delta_lrs */
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
     if (ppt->has_source_delta_lrs == _TRUE_) {
       _set_source_(index_tp) = ppw->delta_lrs_F
 	+ 3.*a_prime_over_a*(1+pvecback[pba->index_bg_p_lrs_F]
@@ -8194,6 +8200,7 @@ int perturb_sources(
     }
 
     /* theta_lrs */
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
     if (ppt->has_source_theta_lrs == _TRUE_) {
       _set_source_(index_tp) = ppw->theta_lrs_F
 	+ theta_shift; // N-body gauge correction
@@ -8575,7 +8582,8 @@ int perturb_print_variables(double tau,
 	theta_lrs = y[idx+1];
 	shear_lrs = y[idx+2];
 	//This is the adiabatic sound speed:
-	delta_p_over_delta_rho_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
+	delta_p_over_delta_rho_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs + g_over_mT*phi_prime/H * (1 - pseudo_p_lrs/p_lrs)) /
+	  (3*(1 + w_lrs) - g_over_mT*phi_prime/H * (1 - 3*w_lrs)); // Ivan: p_prime/rho_prime
 	idx += ppw->pv->l_max_lrs+1;
       }
       else{
@@ -8592,10 +8600,14 @@ int perturb_print_variables(double tau,
 	  q2 = q*q;
 	  epsilon = sqrt(q2+pvecback[pba->index_bg_mT_over_T0_lrs]*pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 
-	  rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*y[idx];
+	  rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
+							   + g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
+	  // The extra term is dimensionless, so we are safe
 	  rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
 	  rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
-	  delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx];
+	  delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
+							    - g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
+	  // The extra term is dimensionless, so we are safe
 
 	  //Jump to next momentum bin:
 	  idx+=(ppw->pv->l_max_lrs+1);
@@ -8925,10 +8937,13 @@ int perturb_print_variables(double tau,
 	q2 = q*q;
 	epsilon = sqrt(q2+pvecback[pba->index_bg_mT_over_T0_lrs]*pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 
-	rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*y[idx];
+	rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
+							 + g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
 	rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
 	rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
-	delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx];
+	delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
+							  - g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
+	// The extra term is dimensionless, so we are safe
 
 	//Jump to next momentum bin:
 	idx+=(ppw->pv->l_max_lrs+1);
@@ -9859,7 +9874,10 @@ int perturb_derivs(double tau,
 	p_lrs_bg = pvecback[pba->index_bg_p_lrs_F]; /* background pressure */
 	pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F]; /* pseudo-pressure (see CLASS IV paper) */
 	w_lrs = p_lrs_bg/rho_lrs_bg; /* equation of state parameter */
-	ca2_lrs = w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); /* adiabatic sound speed */
+	ca2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs + g_over_mT*phi_prime/H * (1 - pseudo_p_lrs/p_lrs)) /
+	  (3*(1 + w_lrs) - g_over_mT*phi_prime/H * (1 - 3*w_lrs)); /* adiabatic sound speed: p_prime/rho_prime */ // Ivan
+	double g_over_mT = ppw->pvecback[pba->lrs_g_over_M]*ppw->pvecback[pba->lrs_M_phi]/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/ppw->pvecback[pba->lrs_m_F_over_T0])*ppw->pvecback[pba->lrs_m_F]); // 1/eV
+	double phi_prime = ppw->pvecback[pba->index_bg_phi_prime_scf]; // eV/Mpc
 	
 	/* c_eff is (delta p / delta rho) in the gauge under
 	   consideration (not in the gauge comoving with the
@@ -9870,7 +9888,7 @@ int perturb_derivs(double tau,
 	/* different ansatz for sound speed c_eff and viscosity speed c_vis */
 	if (ppr->lrs_fluid_approximation == lrsfa_mb) {
 	  ceff2_lrs = ca2_lrs;
-	  cvis2_lrs = 3.*w_lrs*ca2_lrs;
+	  cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); // Ivan
 	}
 	if (ppr->lrs_fluid_approximation == lrsfa_hu) {
 	  ceff2_lrs = ca2_lrs;
@@ -9878,17 +9896,17 @@ int perturb_derivs(double tau,
 	}
 	if (ppr->lrs_fluid_approximation == lrsfa_CLASS) {
 	  ceff2_lrs = ca2_lrs;
-	  cvis2_lrs = 3.*w_lrs*ca2_lrs;
+	  cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); // Ivan
 	}
 
 	/** - -----> exact continuity equation */
 
 	dy[idx] = -(1.0+w_lrs)*(y[idx+1]+metric_continuity)-
-	  3.0*a_prime_over_a*(ceff2_lrs-w_lrs)*y[idx];
+	  3.0*(a_prime_over_a + g_over_mT*phi_prime)*(ceff2_lrs-w_lrs)*y[idx]; // Ivan
 
 	/** - -----> exact euler equation */
 
-	dy[idx+1] = -a_prime_over_a*(1.0-3.0*ca2_lrs)*y[idx+1]+
+	dy[idx+1] = -(a_prime_over_a*(1.0-3.0*ca2_lrs) + (1.-3.*w_lrs)/(1.+w_lrs)*(1.+ca2_lrs)*g_over_mT*phi_prime)*y[idx+1]+ // Ivan
 	  ceff2_lrs/(1.0+w_lrs)*k2*y[idx]-k2*y[idx+2]
 	  + metric_euler;
 
@@ -9896,7 +9914,8 @@ int perturb_derivs(double tau,
 
 	if (ppr->lrs_fluid_approximation == lrsfa_mb) {
 
-	  dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau)*y[idx+2]
+	  dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau +
+			    1./3.*(1-pseudo_p_lrs/p_lrs_bg + (1.-3.*w_lrs)/(1.+w_lrs)*(1+ca2_lrs))*g_over_mT*phi_prime)*y[idx+2] // Ivan
 	    +8.0/3.0*cvis2_lrs/(1.0+w_lrs)*s_l[2]*(y[idx+1]+metric_shear);
 
 	}
@@ -9910,7 +9929,8 @@ int perturb_derivs(double tau,
 
 	if (ppr->lrs_fluid_approximation == lrsfa_CLASS) {
 
-	  dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau)*y[idx+2]
+	  dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau +
+			    1./3.*(1-pseudo_p_lrs/p_lrs_bg + (1.-3.*w_lrs)/(1.+w_lrs)*(1+ca2_lrs))*g_over_mT*phi_prime)*y[idx+2] // Ivan
 	    +8.0/3.0*cvis2_lrs/(1.0+w_lrs)*s_l[2]*(y[idx+1]+metric_ufa_class);
 
 	}
@@ -10281,6 +10301,7 @@ int perturb_derivs(double tau,
     }
 
     /** - --> Scalar-mediated long range interaction */
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
     //TBC: curvature in all ncdm
     if (ppt->evolve_tensor_ncdm == _TRUE_) {
 
