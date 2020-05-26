@@ -4357,6 +4357,16 @@ int perturb_vector_init(
           ppw->pv->y[ppw->pv->index_pt_phi_prime_scf];
       }
 
+      if (pba->has_lrs == _TRUE_) {
+
+        ppv->y[ppv->index_pt_lrs] =
+          ppw->pv->y[ppw->pv->index_pt_lrs];
+
+        ppv->y[ppv->index_pt_lrs_prime] =
+          ppw->pv->y[ppw->pv->index_pt_lrs_prime];
+      }
+
+      
       if (ppt->gauge == synchronous)
         ppv->y[ppv->index_pt_eta] =
           ppw->pv->y[ppw->pv->index_pt_eta];
@@ -5641,6 +5651,18 @@ int perturb_initial_conditions(struct precision * ppr,
            a*a/ppw->pvecback[pba->index_bg_phi_prime_scf]*( - ktau_two/4.*(1.+1./3.)*(4.-3.*1.)/(4.-6.*(1/3.)+3.*1.)*ppw->pvecback[pba->index_bg_rho_scf] - ppw->pvecback[pba->index_bg_dV_scf]*ppw->pv->y[ppw->pv->index_pt_phi_scf])* ppr->curvature_ini * s2_squared; */
       }
 
+      if (pba->has_lrs == _TRUE_) {
+	//jordi, initial conditions
+
+        ppw->pv->y[ppw->pv->index_pt_lrs] = 0.;
+        /*  a*a/k/k/ppw->pvecback[pba->index_bg_phi_prime_scf]*k*ktau_three/4.*1./(4.-6.*(1./3.)+3.*1.) * (ppw->pvecback[pba->index_bg_rho_scf] + ppw->pvecback[pba->index_bg_p_scf])* ppr->curvature_ini * s2_squared; */
+
+        ppw->pv->y[ppw->pv->index_pt_lrs_prime] = 0.;
+        /* delta_fld expression * rho_scf with the w = 1/3, c_s = 1
+           a*a/ppw->pvecback[pba->index_bg_phi_prime_scf]*( - ktau_two/4.*(1.+1./3.)*(4.-3.*1.)/(4.-6.*(1/3.)+3.*1.)*ppw->pvecback[pba->index_bg_rho_scf] - ppw->pvecback[pba->index_bg_dV_scf]*ppw->pv->y[ppw->pv->index_pt_phi_scf])* ppr->curvature_ini * s2_squared; */
+      }
+
+      
       /* all relativistic relics: ur, early ncdm, dr */
 
       if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_) || (pba->has_idr == _TRUE_) || (pba->has_lrs == _TRUE_)) {
@@ -7216,8 +7238,8 @@ int perturb_total_stress_energy(
 	pseudo_p_lrs = ppw->pvecback[pba->index_bg_pseudo_p_lrs_F];
 
 	double g_over_mT = pba->lrs_g_over_M*pba->lrs_M_phi/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV
-	double phi_prime = ppw->pvecback[pba->index_bg_phi_prime_scf]; // eV/Mpc
-	double H = pba->index_bg_H; // Mpc^-1
+	double phi_prime = ppw->pvecback[pba->index_bg_lrs_phi_prime]; // eV/Mpc
+	double H = ppw->pvecback[pba->index_bg_H]; // Mpc^-1
 	rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
 	w_lrs = p_lrs_bg/rho_lrs_bg;
 	cg2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg + g_over_mT*phi_prime/H * (1 - pseudo_p_lrs/p_lrs_bg)) /
@@ -8571,12 +8593,11 @@ int perturb_print_variables(double tau,
     if (pba->has_lrs == _TRUE_) {
       /** - --> Get delta, deltaP/rho, theta, shear and store in array */
       idx = ppw->pv->index_pt_psi0_lrs;
-      //double H = pba->index_bg_H; // Mpc^-1
 
       if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
         // The perturbations are evolved integrated:
 	double g_over_mT = pba->lrs_g_over_M*pba->lrs_M_phi/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV //ojo jordi
-	double phi_prime = ppw->pvecback[pba->index_bg_phi_prime_scf]; // eV/Mpc //ojo jordi
+	double phi_prime = ppw->pvecback[pba->index_bg_lrs_phi_prime]; // eV/Mpc //ojo jordi
 
 	rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F];
 	p_lrs_bg = pvecback[pba->index_bg_p_lrs_F];
@@ -9886,15 +9907,15 @@ int perturb_derivs(double tau,
 	/** - -----> define intermediate quantitites */
 
 	double g_over_mT = pba->lrs_g_over_M*pba->lrs_M_phi/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV
-	double phi_prime = ppw->pvecback[pba->index_bg_phi_prime_scf]; // eV/Mpc
+	double phi_prime = ppw->pvecback[pba->index_bg_lrs_phi_prime]; // eV/Mpc
 
 	
 	rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
 	p_lrs_bg = pvecback[pba->index_bg_p_lrs_F]; /* background pressure */
 	pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F]; /* pseudo-pressure (see CLASS IV paper) */
 	w_lrs = p_lrs_bg/rho_lrs_bg; /* equation of state parameter */
-	ca2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg + g_over_mT*phi_prime/pba->index_bg_H * (1 - pseudo_p_lrs/p_lrs_bg)) /
-	  (3*(1 + w_lrs) - g_over_mT*phi_prime/pba->index_bg_H * (1 - 3*w_lrs)); /* adiabatic sound speed: p_prime/rho_prime */ // Ivan
+	ca2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg + g_over_mT*phi_prime/ppw->pvecback[pba->index_bg_H] * (1 - pseudo_p_lrs/p_lrs_bg)) /
+	  (3*(1 + w_lrs) - g_over_mT*phi_prime/ppw->pvecback[pba->index_bg_H] * (1 - 3*w_lrs)); /* adiabatic sound speed: p_prime/rho_prime */ // Ivan
 	
 	/* c_eff is (delta p / delta rho) in the gauge under
 	   consideration (not in the gauge comoving with the
