@@ -9940,13 +9940,15 @@ int perturb_derivs(double tau,
 	/** - -----> exact continuity equation */
 
 	dy[idx] = -(1.0+w_lrs)*(y[idx+1]+metric_continuity)-
-	  3.0*(a_prime_over_a + g_over_mT*phi_prime)*(ceff2_lrs-w_lrs)*y[idx]; // Ivan
+	  3.0*(a_prime_over_a + g_over_mT*phi_prime)*(ceff2_lrs-w_lrs)*y[idx]+
+	  g_over_mT*y[pv->index_pt_lrs_prime]*(1.0 - 3.*w_lrs) - SQR(g_over_mT)*phi_prime*y[pv->index_pt_lrs]*(1.0 - 3.*w_lrs); // Ivan
 
 	/** - -----> exact euler equation */
 
 	dy[idx+1] = -(a_prime_over_a*(1.0-3.0*ca2_lrs) + (1.-3.*w_lrs)/(1.+w_lrs)*(1.+ca2_lrs)*g_over_mT*phi_prime)*y[idx+1]+ // Ivan
 	  ceff2_lrs/(1.0+w_lrs)*k2*y[idx]-k2*y[idx+2]
-	  + metric_euler;
+	  + metric_euler +
+	  k2*(1.-3.*w_lrs)*g_over_mT*y[pv->index_pt_lrs]/(1.+w_lrs);
 
 	/** - -----> different ansatz for approximate shear derivative */
 
@@ -9983,6 +9985,7 @@ int perturb_derivs(double tau,
       else {
 
 	/** - -----> loop over momentum */
+	double T0_F = pba->T_cmb*pba->lrs_T_F*_k_B_/_eV_;//T in electronvolt
 
 	for (index_q=0; index_q < pv->q_size_lrs; index_q++) {
 
@@ -10000,7 +10003,8 @@ int perturb_derivs(double tau,
 	  /** - -----> lrs velocity for given momentum bin */
 
 	  dy[idx+1] = qk_div_epsilon/3.0*(y[idx] - 2*s_l[2]*y[idx+2])
-	    -epsilon*metric_euler/(3*q*k)*dlnf0_dlnq;
+	    -epsilon*metric_euler/(3*q*k)*dlnf0_dlnq
+	    -(1/3.)*a2*pvecback[pba->index_bg_mT_over_T0_lrs]*k/(q*epsilon)*pba->lrs_g_over_M*pba->lrs_M_phi*dlnf0_dlnq*y[pv->index_pt_lrs]/SQR(pba->a_today)/T0_F;
 
 	  /** - -----> lrs shear for given momentum bin */
 
