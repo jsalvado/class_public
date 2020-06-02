@@ -9598,7 +9598,7 @@ int perturb_derivs(double tau,
       dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
 	- metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: phi_prime is eV/Mpc and metric_continuity gives another Mpc^-1)
 	- (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV)
-        - a2*(g_over_mT*(rho_lrs_bg*y[pv->index_pt_psi0_lrs] - 3*ppw->delta_p_lrs_F)/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2
+        - a2*(g_over_mT*(rho_lrs_bg*ppw->delta_lrs_F - 3*ppw->delta_p_lrs_F)/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2
 	      -SQR(g_over_mT)*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs] * SQR(_Mpc_over_eV)); // Vaya tela con las unidades!! IE: cuando sea mayor hare un fork del CLASS en grados fahrenheit y millas // The last factor convers eV^3 to eV/Mpc^2
 
       //before adding p
