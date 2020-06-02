@@ -3281,6 +3281,7 @@ int input_default_params(
   pba->lrs_g_F = 0;
   pba->lrs_T_F = 0.;
   pba->lrs_m_F_over_T0 = 0.;
+  pba->lrs_M_phi = 0.;
   pba->Omega0_lrs = 0.;
   pba->lrs_quadrature_strategy = 0;
   pba->lrs_input_q_size = -1;

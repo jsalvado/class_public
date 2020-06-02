@@ -3817,8 +3817,8 @@ int perturb_vector_init(
     }
 
     /* lrs field equation */
-    class_define_index(ppv->index_pt_lrs,_TRUE_,index_pt,1);       /* lrs  jordi*/
-    class_define_index(ppv->index_pt_lrs_prime,_TRUE_,index_pt,1); /* lrs' jordi*/
+    class_define_index(ppv->index_pt_lrs,pba->has_lrs,index_pt,1);       /* lrs  jordi*/
+    class_define_index(ppv->index_pt_lrs_prime,pba->has_lrs,index_pt,1); /* lrs' jordi*/
 
     
     /* scalar field */
