@@ -314,7 +314,7 @@ class_precision_parameter(ur_fluid_trigger_tau_over_tau_k,double,30.0)
 
 class_precision_parameter(ncdm_fluid_approximation,int,ncdmfa_CLASS) /**< method for non-cold dark matter fluid approximation */
 
-class_precision_parameter(lrs_fluid_approximation,int,ncdmfa_CLASS) /**< method for scalar-mediated long range interaction fluid approximation */
+class_precision_parameter(lrs_fluid_approximation,int,lrsfa_CLASS) /**< method for scalar-mediated long range interaction fluid approximation */
 
 /**
  * when to switch off ncdm (massive neutrinos / non-cold
