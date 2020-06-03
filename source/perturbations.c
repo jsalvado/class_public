@@ -2643,6 +2643,7 @@ int perturb_workspace_init(
     }
     if (pba->has_lrs == _TRUE_) {
       ppw->approx[ppw->index_ap_lrsfa]=(int)lrsfa_off;
+      ppw->approx[ppw->index_ap_lrsfo]=(int)lrsfo_off;
     }
   }
 
@@ -3607,7 +3608,11 @@ int perturb_find_approximation_switches(
           if (pba->has_lrs == _TRUE_) {
             if ((interval_approx[index_switch-1][ppw->index_ap_lrsfa]==(int)lrsfa_off) &&
                 (interval_approx[index_switch][ppw->index_ap_lrsfa]==(int)lrsfa_on)) {
-              fprintf(stdout,"Mode k=%e: will switch on lrs fluid approximation at tau=%e\n",k,interval_limit[index_switch]);
+              fprintf(stdout,"Mode k=%e: will switch on lrs fluid approximation at tau=%e\n",k,interval_limit[index_switch]); 
+            }
+	    if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo]==(int)lrsfo_off) &&
+                (interval_approx[index_switch][ppw->index_ap_lrsfo]==(int)lrsfo_on)) {
+              fprintf(stdout,"Mode k=%e: will switch on lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
           }
         }
@@ -3818,9 +3823,10 @@ int perturb_vector_init(
     }
 
     /* lrs field equation */
-    class_define_index(ppv->index_pt_lrs,pba->has_lrs,index_pt,1);       /* lrs  jordi*/
-    class_define_index(ppv->index_pt_lrs_prime,pba->has_lrs,index_pt,1); /* lrs' jordi*/
-
+    if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
+      class_define_index(ppv->index_pt_lrs,pba->has_lrs,index_pt,1);       /* lrs  jordi*/
+      class_define_index(ppv->index_pt_lrs_prime,pba->has_lrs,index_pt,1); /* lrs' jordi*/
+    }
     
     /* scalar field */
 
@@ -4358,7 +4364,7 @@ int perturb_vector_init(
           ppw->pv->y[ppw->pv->index_pt_phi_prime_scf];
       }
 
-      if (pba->has_lrs == _TRUE_) {
+      if (pba->has_lrs == _TRUE_ && ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
 
         ppv->y[ppv->index_pt_lrs] =
           ppw->pv->y[ppw->pv->index_pt_lrs];
@@ -5213,6 +5219,119 @@ int perturb_vector_init(
           
         }
       }
+
+      if (pba->has_lrs == _TRUE_) {
+	
+        if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_off) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_on)) {
+
+          if (ppt->perturbations_verbose>2)
+            fprintf(stdout,"Mode k=%e: switch on lrs fluid approximation at tau=%e\n",k,tau);
+
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+            ppv->y[ppv->index_pt_delta_g] =
+              ppw->pv->y[ppw->pv->index_pt_delta_g];
+
+            ppv->y[ppv->index_pt_theta_g] =
+              ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+
+            ppv->y[ppv->index_pt_shear_g] =
+              ppw->pv->y[ppw->pv->index_pt_shear_g];
+
+            ppv->y[ppv->index_pt_l3_g] =
+              ppw->pv->y[ppw->pv->index_pt_l3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+
+              ppv->y[ppv->index_pt_delta_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+            }
+
+            ppv->y[ppv->index_pt_pol0_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+
+            ppv->y[ppv->index_pt_pol1_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+
+            ppv->y[ppv->index_pt_pol2_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+
+            ppv->y[ppv->index_pt_pol3_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+
+              ppv->y[ppv->index_pt_pol0_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+            }
+
+          }
+
+          if (pba->has_ur == _TRUE_) {
+
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+
+              ppv->y[ppv->index_pt_delta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+
+              ppv->y[ppv->index_pt_theta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+
+              ppv->y[ppv->index_pt_shear_ur] =
+                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+
+                ppv->y[ppv->index_pt_l3_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+
+                for (l=4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur+l] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+
+              }
+            }
+          }
+
+          if (pba->has_idr == _TRUE_){
+            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+
+              ppv->y[ppv->index_pt_delta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+
+              ppv->y[ppv->index_pt_theta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+
+              if (ppt->idr_nature == idr_free_streaming){
+
+                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+
+                  ppv->y[ppv->index_pt_shear_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+
+                  ppv->y[ppv->index_pt_l3_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+
+                  for (l=4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr+l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+                }
+              }
+            }
+          }
+
+
+          a = ppw->pvecback[pba->index_bg_a];
+
+	  ppv->y[ppv->index_pt_lrs] =
+	  ppv->y[ppv->index_pt_lrs_prime] =
+          
+        }
+      }
       
     }
 
@@ -5652,7 +5771,8 @@ int perturb_initial_conditions(struct precision * ppr,
            a*a/ppw->pvecback[pba->index_bg_phi_prime_scf]*( - ktau_two/4.*(1.+1./3.)*(4.-3.*1.)/(4.-6.*(1/3.)+3.*1.)*ppw->pvecback[pba->index_bg_rho_scf] - ppw->pvecback[pba->index_bg_dV_scf]*ppw->pv->y[ppw->pv->index_pt_phi_scf])* ppr->curvature_ini * s2_squared; */
       }
 
-      if (pba->has_lrs == _TRUE_) {
+
+      if (pba->has_lrs == _TRUE_ && ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
 	//jordi, initial conditions
 
         ppw->pv->y[ppw->pv->index_pt_lrs] = 0.;
@@ -6383,11 +6503,11 @@ int perturb_approximations(
     }
 
     if (pba->has_lrs == _TRUE_) {
-      if ( ppt->k_max > (1)){//ojo there is a term missing in (1)
-	ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfo_on;
+      if ( k > (1)){//ojo there is a term missing in (1)
+	ppw->approx[ppw->index_ap_lrsfo] = (int)lrsfo_on;
       }
       else {
-	ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfo_off;
+	ppw->approx[ppw->index_ap_lrsfo] = (int)lrsfo_off;
       }
       
       
@@ -7280,6 +7400,10 @@ int perturb_total_stress_energy(
 
 	double g_over_mT=pba->lrs_g_over_M*pba->lrs_M_phi/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV
 
+	
+	double delta_phi=
+	  
+	
 	for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
 
 	  q = pba->q_lrs[index_q];
@@ -7288,12 +7412,12 @@ int perturb_total_stress_energy(
 
 	  // ivan
 	  rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
-							   + g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
+							   + g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * delta_phi);
 	  // The extra term is dimensionless, so we are safe
 	  rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
 	  rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
 	  delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
-							    - g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * y[ppw->pv->index_pt_lrs]);
+							    - g_over_mT * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]) / SQR(epsilon) * SQR(pba->a_today/a) * delta_phi);
 	  // The extra term is dimensionless, so we are safe
 
 	  //Jump to next momentum bin:
@@ -7377,45 +7501,51 @@ int perturb_total_stress_energy(
       // Ivan: Scalar field contribution
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
       double phi_prime = ppw->pvecback[pba->index_bg_lrs_phi_prime]; // Background phi_prime [eV/Mpc]
-
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
+      double delta_phi;
+      double delta_phi_prime;
       
-	if (ppt->gauge == synchronous){
-	  delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
-	    + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]; // eV^4
-	  delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
-	    - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs];
-	}
-	else{
-	  /* equation for psi */
-	  psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
-	  
-	  delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
-	    + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
-	    - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
-	  delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
-	    - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
-	    - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
-	}
-	
-	ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
-	
-	ppw->rho_plus_p_theta +=  (phi_prime*y[ppw->pv->index_pt_lrs_prime] /SQR(_Mpc_over_eV)) // eV^4
-	  *_eV4_to_rho_class // Mpc^-2, with the 8piG/3 factor
-	  * k*k/a2;
-	
-	ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
-	
-	ppw->rho_plus_p_tot += 0; // The background has p=-rho
-
+      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
+	delta_phi=y[ppw->pv->index_pt_lrs];
+	delta_phi_prime=y[ppw->pv->index_pt_lrs_prime];
+      }else{
+	delta_phi=;
+	delta_phi_prime=;
       }
-    }
-    if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_on){
-      //The same for the analytic calculation
+	
+
+	
+      if (ppt->gauge == synchronous){
+	delta_rho_scf = 1./a2*phi_prime*delta_phi_prime / SQR(_Mpc_over_eV)
+	  + phi_M * pba->lrs_M_phi * delta_phi; // eV^4
+	delta_p_scf = 1./a2*phi_prime*delta_phi_prime / SQR(_Mpc_over_eV)  
+	  - phi_M * pba->lrs_M_phi * delta_phi;
+      }
+      else{
+	/* equation for psi */
+	psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
+	
+	delta_rho_scf = 1./a2*phi_prime*delta_phi_prime / SQR(_Mpc_over_eV)
+	  + phi_M * pba->lrs_M_phi * delta_phi
+	  - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
+	delta_p_scf = 1./a2*phi_prime*delta_phi_prime / SQR(_Mpc_over_eV)  
+	  - phi_M * pba->lrs_M_phi * delta_phi
+	  - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
+      }
+      
+      ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
+      
+      ppw->rho_plus_p_theta +=  (phi_prime*delta_phi_prime /SQR(_Mpc_over_eV)) // eV^4
+	*_eV4_to_rho_class // Mpc^-2, with the 8piG/3 factor
+	* k*k/a2;
+      
+      ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
+      
+      ppw->rho_plus_p_tot += 0; // The background has p=-rho
       
     }
     
-
+    
+    
     /* add your extra species here */
 
     /* fluid contribution */
@@ -9596,7 +9726,7 @@ int perturb_derivs(double tau,
     /* jordi */
     // ivan
     if (pba->has_lrs == _TRUE_){
-      if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfa_on){
+      if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_on){
 	double Mphi2_in_Mpc2=pba->lrs_M_phi*pba->lrs_M_phi*_Mpc_over_eV*_Mpc_over_eV;
 	/* Derivative of the field value */
 	dy[pv->index_pt_lrs] = y[pv->index_pt_lrs_prime];
@@ -9616,8 +9746,9 @@ int perturb_derivs(double tau,
 	  - a2*(g_over_mT*(rho_lrs_bg*ppw->delta_lrs_F - 3*ppw->delta_p_lrs_F)/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2
 		-SQR(g_over_mT)*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs] * SQR(_Mpc_over_eV)); // Vaya tela con las unidades!! IE: cuando sea mayor hare un fork del CLASS en grados fahrenheit y millas // The last factor convers eV^3 to eV/Mpc^2
       }
-      /** - ---> scalar field (scf) */
     }
+      /** - ---> scalar field (scf) */
+    
     if (pba->has_scf == _TRUE_) {
 
       /** - ----> field value */
@@ -9907,6 +10038,8 @@ int perturb_derivs(double tau,
       
       idx = pv->index_pt_psi0_lrs;
 
+      double delta_phi;
+      double delta_phi_prime;
       /** - ----> first case: use a fluid approximation (lrsfa) */
       //TBC: curvature
       if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on) {
@@ -9943,18 +10076,19 @@ int perturb_derivs(double tau,
 	  cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); // Ivan
 	}
 
+
 	/** - -----> exact continuity equation */
 
 	dy[idx] = -(1.0+w_lrs)*(y[idx+1]+metric_continuity)-
 	  3.0*(a_prime_over_a + g_over_mT*phi_prime)*(ceff2_lrs-w_lrs)*y[idx]+
-	  g_over_mT*y[pv->index_pt_lrs_prime]*(1.0 - 3.*w_lrs) - SQR(g_over_mT)*phi_prime*y[pv->index_pt_lrs]*(1.0 - 3.*w_lrs); // Ivan
+	  g_over_mT*delta_phi_prime*(1.0 - 3.*w_lrs) - SQR(g_over_mT)*phi_prime*delta_phi*(1.0 - 3.*w_lrs); // Ivan
 
 	/** - -----> exact euler equation */
 
 	dy[idx+1] = -(a_prime_over_a*(1.0-3.0*ca2_lrs) + (1.-3.*w_lrs)/(1.+w_lrs)*(1.+ca2_lrs)*g_over_mT*phi_prime)*y[idx+1]+ // Ivan
 	  ceff2_lrs/(1.0+w_lrs)*k2*y[idx]-k2*y[idx+2]
 	  + metric_euler +
-	  k2*(1.-3.*w_lrs)*g_over_mT*y[pv->index_pt_lrs]/(1.+w_lrs);
+	  k2*(1.-3.*w_lrs)*g_over_mT*delta_phi/(1.+w_lrs);
 
 	/** - -----> different ansatz for approximate shear derivative */
 
@@ -10010,7 +10144,7 @@ int perturb_derivs(double tau,
 
 	  dy[idx+1] = qk_div_epsilon/3.0*(y[idx] - 2*s_l[2]*y[idx+2])
 	    -epsilon*metric_euler/(3*q*k)*dlnf0_dlnq
-	    -(1/3.)*a2*pvecback[pba->index_bg_mT_over_T0_lrs]*k/(q*epsilon)*pba->lrs_g_over_M*pba->lrs_M_phi*dlnf0_dlnq*y[pv->index_pt_lrs]/SQR(pba->a_today)/T0_F;
+	    -(1/3.)*a2*pvecback[pba->index_bg_mT_over_T0_lrs]*k/(q*epsilon)*pba->lrs_g_over_M*pba->lrs_M_phi*dlnf0_dlnq*delta_phi/SQR(pba->a_today)/T0_F;
 
 	  /** - -----> lrs shear for given momentum bin */
 
