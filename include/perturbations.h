@@ -33,6 +33,7 @@ enum rsa_idr_flags {rsa_idr_off, rsa_idr_on};
 enum ufa_flags {ufa_off, ufa_on};
 enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
 enum lrsfa_flags {lrsfa_off, lrsfa_on};
+enum lrsfo_flags {lrsfo_off, lrsfo_on};
 
 //@}
 
@@ -640,6 +641,7 @@ struct perturb_workspace
   int index_ap_ufa; /**< index for ur fluid approximation */
   int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
   int index_ap_lrsfa; /**< index for lrs fluid approximation */
+  int index_ap_lrsfo; /**< index for lrs fast oscillations */
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */

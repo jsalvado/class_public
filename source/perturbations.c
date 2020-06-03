@@ -2610,6 +2610,7 @@ int perturb_workspace_init(
     class_define_index(ppw->index_ap_ufa,pba->has_ur,index_ap,1);
     class_define_index(ppw->index_ap_ncdmfa,pba->has_ncdm,index_ap,1);
     class_define_index(ppw->index_ap_lrsfa,pba->has_lrs,index_ap,1);
+    class_define_index(ppw->index_ap_lrsfo,pba->has_lrs,index_ap,1);
     class_define_index(ppw->index_ap_tca_idm_dr,pba->has_idm_dr,index_ap,1);
     class_define_index(ppw->index_ap_rsa_idr,pba->has_idr,index_ap,1);
 
@@ -6382,7 +6383,14 @@ int perturb_approximations(
     }
 
     if (pba->has_lrs == _TRUE_) {
-
+      if ( ppt->k_max > (1)){//ojo there is a term missing in (1)
+	ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfo_on;
+      }
+      else {
+	ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfo_off;
+      }
+      
+      
       if ((tau/tau_k > ppr->lrs_fluid_trigger_tau_over_tau_k) &&
           (ppr->lrs_fluid_approximation != lrsfa_none)) {
 
@@ -7369,35 +7377,42 @@ int perturb_total_stress_energy(
       // Ivan: Scalar field contribution
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
       double phi_prime = ppw->pvecback[pba->index_bg_lrs_phi_prime]; // Background phi_prime [eV/Mpc]
+
+      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
       
-      if (ppt->gauge == synchronous){
-	delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
-	  + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]; // eV^4
-        delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
-	  - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs];
+	if (ppt->gauge == synchronous){
+	  delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
+	    + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]; // eV^4
+	  delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
+	    - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs];
+	}
+	else{
+	  /* equation for psi */
+	  psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
+	  
+	  delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
+	    + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
+	    - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
+	  delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
+	    - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
+	    - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
+	}
+	
+	ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
+	
+	ppw->rho_plus_p_theta +=  (phi_prime*y[ppw->pv->index_pt_lrs_prime] /SQR(_Mpc_over_eV)) // eV^4
+	  *_eV4_to_rho_class // Mpc^-2, with the 8piG/3 factor
+	  * k*k/a2;
+	
+	ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
+	
+	ppw->rho_plus_p_tot += 0; // The background has p=-rho
+
       }
-      else{
-        /* equation for psi */
-        psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
-
-	delta_rho_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)
-	  + phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
-	  - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
-        delta_p_scf = 1./a2*phi_prime*y[ppw->pv->index_pt_lrs_prime] / SQR(_Mpc_over_eV)  
-	  - phi_M * pba->lrs_M_phi * y[ppw->pv->index_pt_lrs]
-	  - 1./a2*SQR(phi_prime)*psi / SQR(_Mpc_over_eV); // eV^4
-      }
-
-      ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
-
-      ppw->rho_plus_p_theta +=  (phi_prime*y[ppw->pv->index_pt_lrs_prime] /SQR(_Mpc_over_eV)) // eV^4
-	*_eV4_to_rho_class // Mpc^-2, with the 8piG/3 factor
-	* k*k/a2;
-
-      ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
-
-      ppw->rho_plus_p_tot += 0; // The background has p=-rho
-
+    }
+    if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_on){
+      //The same for the analytic calculation
+      
     }
     
 
@@ -9581,36 +9596,27 @@ int perturb_derivs(double tau,
     /* jordi */
     // ivan
     if (pba->has_lrs == _TRUE_){
-      double Mphi2_in_Mpc2=pba->lrs_M_phi*pba->lrs_M_phi*_Mpc_over_eV*_Mpc_over_eV;
-      /* Derivative of the field value */
-      dy[pv->index_pt_lrs] = y[pv->index_pt_lrs_prime];
-      /* Second derivative of the field Klein Gordon equation */
-      double p_lrs_bg=pvecback[pba->index_bg_p_lrs_F];
-      double rho_lrs_bg=pvecback[pba->index_bg_rho_lrs_F];
-      
-      double w_lrs = p_lrs_bg/rho_lrs_bg;
-      double pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
-      double cg2_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
-
-      double g_over_mT=pba->lrs_g_over_M*pba->lrs_M_phi/((pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV
-
-      // Everything here should have units of eV/Mpc^2
-      dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
-	- metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: phi_prime is eV/Mpc and metric_continuity gives another Mpc^-1)
-	- (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV)
-        - a2*(g_over_mT*(rho_lrs_bg*ppw->delta_lrs_F - 3*ppw->delta_p_lrs_F)/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2
-	      -SQR(g_over_mT)*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs] * SQR(_Mpc_over_eV)); // Vaya tela con las unidades!! IE: cuando sea mayor hare un fork del CLASS en grados fahrenheit y millas // The last factor convers eV^3 to eV/Mpc^2
-
-      //before adding p
-      /*       // Everything here should have units of eV/Mpc^2 */
-      /* dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime] */
-      /* 	- metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: phi_prime is eV/Mpc and metric_continuity gives another Mpc^-1) */
-      /* 	- (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV) */
-      /*   - a2*(g_over_mT*(rho_lrs_bg*y[pv->index_pt_psi0_lrs] - 3*cg2_lrs*rho_lrs_bg*y[pv->index_pt_psi0_lrs])/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2 */
-      /* 	      -SQR(g_over_mT)*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs] * SQR(_Mpc_over_eV)); // Vaya tela con las unidades!! IE: cuando sea mayor hare un fork del CLASS en grados fahrenheit y millas /* // The last factor convers eV^3 to eV/Mpc^2
-		      }
-    
-		      /** - ---> scalar field (scf) */
+      if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfa_on){
+	double Mphi2_in_Mpc2=pba->lrs_M_phi*pba->lrs_M_phi*_Mpc_over_eV*_Mpc_over_eV;
+	/* Derivative of the field value */
+	dy[pv->index_pt_lrs] = y[pv->index_pt_lrs_prime];
+	/* Second derivative of the field Klein Gordon equation */
+	double p_lrs_bg=pvecback[pba->index_bg_p_lrs_F];
+	double rho_lrs_bg=pvecback[pba->index_bg_rho_lrs_F];
+	
+	double w_lrs = p_lrs_bg/rho_lrs_bg;
+	double pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
+	double cg2_lrs = w_lrs*(1.0-1.0/(3.0+3.0*w_lrs)*(3.0*w_lrs-2.0+pseudo_p_lrs/p_lrs_bg));
+	
+	double g_over_mT=pba->lrs_g_over_M*pba->lrs_M_phi/((pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV
+	// Everything here should have units of eV/Mpc^2
+	dy[pv->index_pt_lrs_prime] =  - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
+	  - metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: phi_prime is eV/Mpc and metric_continuity gives another Mpc^-1)
+	  - (k2 + a2*Mphi2_in_Mpc2)*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV)
+	  - a2*(g_over_mT*(rho_lrs_bg*ppw->delta_lrs_F - 3*ppw->delta_p_lrs_F)/_eV4_to_rho_class * SQR(_Mpc_over_eV) // The last factor convers eV^3 to eV/Mpc^2
+		-SQR(g_over_mT)*(pvecback[pba->index_bg_rho_lrs_F]-3.*pvecback[pba->index_bg_p_lrs_F])/_eV4_to_rho_class*y[pv->index_pt_lrs] * SQR(_Mpc_over_eV)); // Vaya tela con las unidades!! IE: cuando sea mayor hare un fork del CLASS en grados fahrenheit y millas // The last factor convers eV^3 to eV/Mpc^2
+      }
+      /** - ---> scalar field (scf) */
     }
     if (pba->has_scf == _TRUE_) {
 
