@@ -11,7 +11,7 @@
 */
 const double _eV4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2) * pow(_eV_, 4);
 const double _J4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2);
-const double _Mpc_over_eV = _eV_/(_h_P_/(2*_PI_) * _c_) * _Mpc_over_m_;
+const double _Mpc_times_eV = _eV_/(_h_P_/(2*_PI_) * _c_) * _Mpc_over_m_; // Multiply by this to convert eV to Mpc^-1
 
 /**
  * This is the routine where the distribution function f0(q) of the

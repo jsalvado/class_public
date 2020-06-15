@@ -601,6 +601,7 @@ struct perturb_workspace
   double delta_p_lrs_F; /**< relative density perturbation of scalar-mediated long range interaction */
   double theta_lrs_F;	/**< velocity divergence theta of scalar-mediated long range interaction */
   double shear_lrs_F;	/**< shear for scalar-mediated long range interaction */
+  double delta_phi_lrsfo; /**< delta_phi in the fast oscillation approximation */
 
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */
