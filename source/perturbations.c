@@ -3892,15 +3892,16 @@ int perturb_vector_init(
       }
     }
 
-    /* lrs field equation */
-    if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
-      class_define_index(ppv->index_pt_lrs,pba->has_lrs,index_pt,1);       /* lrs  jordi*/
-      class_define_index(ppv->index_pt_lrs_prime,pba->has_lrs,index_pt,1); /* lrs' jordi*/
-    }
-    
-    /* Scalar-mediated long range interaction */
-
     if (pba->has_lrs == _TRUE_) {
+      /* lrs field equation */
+      if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
+	class_define_index(ppv->index_pt_lrs,pba->has_lrs,index_pt,1);       /* lrs  jordi*/
+	class_define_index(ppv->index_pt_lrs_prime,pba->has_lrs,index_pt,1); /* lrs' jordi*/
+      }
+      
+      /* Scalar-mediated long range interaction */
+      
+      
       ppv->index_pt_psi0_lrs = index_pt; /* density of ultra-relativistic neutrinos/relics */
       
       // Set value of ppv->l_max_lrs:
