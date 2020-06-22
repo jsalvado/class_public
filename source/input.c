@@ -1255,10 +1255,19 @@ int input_read_parameters(
   class_read_double("lrs_T_F",pba->lrs_T_F);
 
   class_read_string("longrangescalar",string1);
-  pba->has_lrs=((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL));
+  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
+    pba->has_lrs = _TRUE_;
+  }else{
+    pba->has_lrs = _FALSE_;
+  }
+  
   class_read_string("longrangescalar_pt",string1);
-  ppt->has_lrs_pt=((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL));
-
+  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
+    ppt->has_lrs_pt = _TRUE_;
+  }else{
+    ppt->has_lrs_pt = _FALSE_;
+  }
+  
   
   // Tolerance
   if (ppt->gauge == synchronous)
@@ -3292,8 +3301,7 @@ int input_default_params(
   pba->lrs_quadrature_strategy = 0;
   pba->lrs_input_q_size = -1;
   pba->lrs_qmax = 15.;
-  pba->has_lrs = false;
-  pba->has_lrs_pt = false;
+  pba->has_lrs = _FALSE_;
   
 
   pba->Omega0_k = 0.;
@@ -3371,6 +3379,7 @@ int input_default_params(
 
   //ppt->pk_only_cdm_bar=_FALSE_;
 
+  ppt->has_lrs_pt = _FALSE_;
   ppt->switch_sw = 1;
   ppt->switch_eisw = 1;
   ppt->switch_lisw = 1;

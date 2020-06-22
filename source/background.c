@@ -987,7 +987,7 @@ int background_indices(
   pba->has_scf = _FALSE_;
   pba->has_lambda = _FALSE_;
   pba->has_fld = _FALSE_;
-  pba->has_lrs = _FALSE_;
+  //pba->has_lrs = _FALSE_;
   pba->has_ur = _FALSE_;
   pba->has_idr = _FALSE_;
   pba->has_idm_dr = _FALSE_;
