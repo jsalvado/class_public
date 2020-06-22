@@ -1014,8 +1014,8 @@ int background_indices(
   if (pba->Omega0_fld != 0.)
     pba->has_fld = _TRUE_;
 
-  if (pba->lrs_g_over_M > 1e-10)
-    pba->has_lrs = _TRUE_;
+  //  if (pba->lrs_g_over_M > 1e-10)
+  //    pba->has_lrs = _TRUE_;
 
   if (pba->Omega0_ur != 0.)
     pba->has_ur = _TRUE_;

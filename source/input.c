@@ -1254,6 +1254,12 @@ int input_read_parameters(
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
 
+  class_read_string("longrangescalar",string1);
+  pba->has_lrs=((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL));
+  class_read_string("longrangescalar_pt",string1);
+  ppt->has_lrs_pt=((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL));
+
+  
   // Tolerance
   if (ppt->gauge == synchronous)
     ppr->tol_lrs = ppr->tol_lrs_synchronous;
@@ -3286,7 +3292,9 @@ int input_default_params(
   pba->lrs_quadrature_strategy = 0;
   pba->lrs_input_q_size = -1;
   pba->lrs_qmax = 15.;
-
+  pba->has_lrs = false;
+  pba->has_lrs_pt = false;
+  
 
   pba->Omega0_k = 0.;
   pba->K = 0.;
