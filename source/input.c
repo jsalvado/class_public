@@ -1281,7 +1281,7 @@ int input_read_parameters(
   // qmax, if relevant
   class_read_double("Maximum q",pba->lrs_qmax);
 
-  if (pba->lrs_g_over_M > 1e-10){
+  if (pba->has_lrs){
     // Compute m_F over the *current* fermion temperature
     pba->lrs_m_F_over_T0 = pba->lrs_m_F * _eV_ / (_k_B_*pba->lrs_T_F*pba->T_cmb);
     
