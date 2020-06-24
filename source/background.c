@@ -699,7 +699,7 @@ int background_init(
     printf("Computing background\n");
 
     /* below we want to inform the user about ncdm species and/or the total N_eff */
-    if ((pba->N_ncdm > 0) || (pba->Omega0_idr != 0.) || (pba->lrs_g_over_M > 1e-10))  {
+    if ((pba->N_ncdm > 0) || (pba->Omega0_idr != 0.) || (pba->has_lrs ))  {
 
       /* contribution of ultra-relativistic species _ur to N_eff */
       Neff = pba->Omega0_ur/7.*8./pow(4./11.,4./3.)/pba->Omega0_g;
@@ -1013,9 +1013,6 @@ int background_indices(
 
   if (pba->Omega0_fld != 0.)
     pba->has_fld = _TRUE_;
-
-  //  if (pba->lrs_g_over_M > 1e-10)
-  //    pba->has_lrs = _TRUE_;
 
   if (pba->Omega0_ur != 0.)
     pba->has_ur = _TRUE_;
