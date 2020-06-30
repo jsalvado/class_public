@@ -334,7 +334,7 @@ int perturb_output_titles(
           class_store_columntitle(titles,tmp,_TRUE_);
         }
       }
-      class_store_columntitle(titles,"d_lrs",ppt->has_lrs_pt);
+      class_store_columntitle(titles,"d_lrs",pba->has_lrs);
       class_store_columntitle(titles,"d_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"d_dr",pba->has_dr);
       class_store_columntitle(titles,"d_scf",pba->has_scf);
@@ -364,7 +364,7 @@ int perturb_output_titles(
           class_store_columntitle(titles,tmp,_TRUE_);
         }
       }
-      class_store_columntitle(titles,"t_lrs",ppt->has_lrs_pt);
+      class_store_columntitle(titles,"t_lrs",pba->has_lrs);
       class_store_columntitle(titles,"t_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"t_dr",pba->has_dr);
       class_store_columntitle(titles,"t__scf",pba->has_scf);
@@ -561,7 +561,7 @@ int perturb_init(
 
   }
 
-  if (ppt->has_lrs_pt == _TRUE_) {
+  if (pba->has_lrs == _TRUE_) {
 
     class_test ((ppr->lrs_fluid_approximation < lrsfa_mb) ||
                 (ppr->lrs_fluid_approximation > lrsfa_none),
@@ -629,7 +629,7 @@ int perturb_init(
       break;
 
     case (tm_massless_approximation):
-      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_))
+      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_))
         ppt->evolve_tensor_ur = _TRUE_;
       break;
 
@@ -638,7 +638,7 @@ int perturb_init(
         ppt->evolve_tensor_ur = _TRUE_;
       if (pba->has_ncdm == _TRUE_)
         ppt->evolve_tensor_ncdm = _TRUE_;
-      if (ppt->has_lrs_pt == _TRUE_)
+      if (pba->has_lrs == _TRUE_)
         ppt->evolve_tensor_lrs = _TRUE_;
       break;
     }
@@ -1158,7 +1158,7 @@ int perturb_indices_of_perturbs(
         ppt->has_lss = _TRUE_;
         ppt->has_source_delta_m = _TRUE_;
 
-        if ((pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_)){
+        if ((pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_)){
           ppt->has_source_delta_cb = _TRUE_;
         }
       }
@@ -1186,7 +1186,7 @@ int perturb_indices_of_perturbs(
           ppt->has_source_delta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_delta_ncdm = _TRUE_;
-        if (ppt->has_lrs_pt == _TRUE_)
+        if (pba->has_lrs == _TRUE_)
           ppt->has_source_delta_lrs = _TRUE_;
         // Thanks to the following lines, (phi,psi) are also stored as sources
         // (Obtained directly in newtonian gauge, infereed from (h,eta) in synchronous gauge).
@@ -1219,7 +1219,7 @@ int perturb_indices_of_perturbs(
           ppt->has_source_theta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_theta_ncdm = _TRUE_;
-        if (ppt->has_lrs_pt == _TRUE_)
+        if (pba->has_lrs == _TRUE_)
           ppt->has_source_theta_lrs = _TRUE_;
       }
 
@@ -1230,7 +1230,7 @@ int perturb_indices_of_perturbs(
         }
         if (ppt->has_nc_rsd == _TRUE_) {
           ppt->has_source_theta_m = _TRUE_;
-          if ((pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_))
+          if ((pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_))
             /* we may not need theta_cb at all, rsd always defined for
                the total matter, but at least this is made
                available */
@@ -2521,13 +2521,13 @@ int perturb_workspace_init(
     if ((pba->has_idr == _TRUE_) && (ppt->idr_nature == idr_free_streaming)) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_idr);
     if (pba->has_ncdm == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_ncdm);
     if (pba->has_dr == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_dr);
-    if (ppt->has_lrs_pt == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs);
+    if (pba->has_lrs == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs);
   }
   if (_tensors_) {
     ppw->max_l_max = MAX(ppr->l_max_g_ten, ppr->l_max_pol_g_ten);
     if (pba->has_ur == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_ur);
     if (pba->has_ncdm == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_ncdm);
-    if (ppt->has_lrs_pt == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs);
+    if (pba->has_lrs == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs);
   }
 
   /** - Allocate \f$ s_l\f$[ ] array for freestreaming of multipoles (see arXiv:1305.3261) and initialize
@@ -2609,7 +2609,7 @@ int perturb_workspace_init(
 
     class_define_index(ppw->index_ap_ufa,pba->has_ur,index_ap,1);
     class_define_index(ppw->index_ap_ncdmfa,pba->has_ncdm,index_ap,1);
-    class_define_index(ppw->index_ap_lrsfa,ppt->has_lrs_pt,index_ap,1);
+    class_define_index(ppw->index_ap_lrsfa,pba->has_lrs,index_ap,1);
     class_define_index(ppw->index_ap_lrsfo,ppt->has_lrs_pt,index_ap,1);
     class_define_index(ppw->index_ap_tca_idm_dr,pba->has_idm_dr,index_ap,1);
     class_define_index(ppw->index_ap_rsa_idr,pba->has_idr,index_ap,1);
@@ -2641,10 +2641,11 @@ int perturb_workspace_init(
     if (pba->has_ncdm == _TRUE_) {
       ppw->approx[ppw->index_ap_ncdmfa]=(int)ncdmfa_off;
     }
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_)
       ppw->approx[ppw->index_ap_lrsfa]=(int)lrsfa_off;
+    if (ppt->has_lrs_pt == _TRUE_)
       ppw->approx[ppw->index_ap_lrsfo]=(int)lrsfo_off;
-    }
+    
   }
 
   if (_tensors_) {
@@ -2880,7 +2881,7 @@ int perturb_solve(
     }
   }
 
-  if (ppt->has_lrs_pt == _TRUE_) {
+  if (pba->has_lrs == _TRUE_) {
     class_test(fabs(ppw->pvecback[pba->index_bg_p_lrs_F]/ppw->pvecback[pba->index_bg_rho_lrs_F]-1./3.)>ppr->tol_lrs_initial_w,
                ppt->error_message,
                "your choice of initial time for integrating wavenumbers is inappropriate: it corresponds to a time at which the long range interacting species is not ultra-relativistic anymore, with w=%g, p=%g and rho=%g\n",
@@ -2916,7 +2917,7 @@ int perturb_solve(
       }
     }
 
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       if (fabs(ppw->pvecback[pba->index_bg_p_lrs_F]/ppw->pvecback[pba->index_bg_rho_lrs_F]-1./3.) > ppr->tol_lrs_initial_w)
           is_early_enough = _FALSE_;
     }
@@ -3201,7 +3202,7 @@ int perturb_prepare_k_output(struct background * pba,
         }
       }
       /* Scalar-mediated long-range interaction */
-      if ((ppt->has_lrs_pt == _TRUE_) && ((ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_) || (ppt->has_source_delta_m == _TRUE_))) {
+      if ((pba->has_lrs == _TRUE_) && ((ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_) || (ppt->has_source_delta_m == _TRUE_))) {
         class_store_columntitle(ppt->scalar_titles,"delta_lrs_F",_TRUE_);
         class_store_columntitle(ppt->scalar_titles,"theta_lrs_F",_TRUE_);
         class_store_columntitle(ppt->scalar_titles,"shear_lrs_F",_TRUE_);
@@ -3605,7 +3606,7 @@ int perturb_find_approximation_switches(
               fprintf(stdout,"Mode k=%e: will switch on ncdm fluid approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
           }
-          if (ppt->has_lrs_pt == _TRUE_) {
+          if (pba->has_lrs == _TRUE_) {
             if ((interval_approx[index_switch-1][ppw->index_ap_lrsfa]==(int)lrsfa_off) &&
                 (interval_approx[index_switch][ppw->index_ap_lrsfa]==(int)lrsfa_on)) {
               fprintf(stdout,"Mode k=%e: will switch on lrs fluid approximation at tau=%e\n",k,interval_limit[index_switch]); 
@@ -3892,12 +3893,13 @@ int perturb_vector_init(
       }
     }
 
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       /* lrs field equation */
-      if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
-	class_define_index(ppv->index_pt_lrs,ppt->has_lrs_pt,index_pt,1);       /* lrs  jordi*/
-	class_define_index(ppv->index_pt_lrs_prime,ppt->has_lrs_pt,index_pt,1); /* lrs' jordi*/
-      }
+      if(ppt->has_lrs_pt == _FALSE_)
+        if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off ) {
+          class_define_index(ppv->index_pt_lrs,ppt->has_lrs_pt,index_pt,1);       /* lrs  jordi*/
+          class_define_index(ppv->index_pt_lrs_prime,ppt->has_lrs_pt,index_pt,1); /* lrs' jordi*/
+        }
       
       /* Scalar-mediated long range interaction */
       
@@ -4143,7 +4145,7 @@ int perturb_vector_init(
       }
     }
 
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       /* we don't need ncdm multipoles above l=2 (but they are
          defined only when lrsfa is off) */
       index_pt = ppv->index_pt_psi0_lrs;
@@ -4225,7 +4227,7 @@ int perturb_vector_init(
 
       }
 
-      if (ppt->has_lrs_pt == _TRUE_) {
+      if (pba->has_lrs == _TRUE_) {
 
         class_test(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on,
                    ppt->error_message,
@@ -4466,7 +4468,7 @@ int perturb_vector_init(
           }
         }
         
-        if (ppt->has_lrs_pt == _TRUE_) {
+        if (pba->has_lrs == _TRUE_) {
           index_pt = 0;
           for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
             for(l=0; l<=ppv->l_max_lrs;l++){
@@ -4477,10 +4479,11 @@ int perturb_vector_init(
             }
           }
 
-          if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
-            ppv->y[ppv->index_pt_lrs] = ppw->pv->y[ppw->pv->index_pt_lrs];
-            ppv->y[ppv->index_pt_lrs_prime] = ppw->pv->y[ppw->pv->index_pt_lrs_prime];
-          }
+          if (ppt->has_lrs_pt == _TRUE_) 
+            if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
+              ppv->y[ppv->index_pt_lrs] = ppw->pv->y[ppw->pv->index_pt_lrs];
+              ppv->y[ppv->index_pt_lrs_prime] = ppw->pv->y[ppw->pv->index_pt_lrs_prime];
+            }
         }
 
         /* perturbed recombination */
@@ -4552,7 +4555,7 @@ int perturb_vector_init(
           }
         }
 
-        if (ppt->has_lrs_pt == _TRUE_) {
+        if (pba->has_lrs == _TRUE_) {
           index_pt = 0;
           for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
             for(l=0; l<=ppv->l_max_lrs; l++){
@@ -4562,6 +4565,7 @@ int perturb_vector_init(
             }
           }
 
+          if (ppt->has_lrs_pt == _TRUE_) 
           if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
             ppv->y[ppv->index_pt_lrs] = ppw->pv->y[ppw->pv->index_pt_lrs];
             ppv->y[ppv->index_pt_lrs_prime] = ppw->pv->y[ppw->pv->index_pt_lrs_prime];
@@ -4678,7 +4682,7 @@ int perturb_vector_init(
             }
           }
 
-          if (ppt->has_lrs_pt == _TRUE_) {
+          if (pba->has_lrs == _TRUE_) {
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
@@ -4791,7 +4795,7 @@ int perturb_vector_init(
             }
           }
 
-          if (ppt->has_lrs_pt == _TRUE_) {
+          if (pba->has_lrs == _TRUE_) {
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
@@ -4920,7 +4924,7 @@ int perturb_vector_init(
             }
           }
 
-          if (ppt->has_lrs_pt == _TRUE_) {
+          if (pba->has_lrs == _TRUE_) {
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
@@ -5087,7 +5091,7 @@ int perturb_vector_init(
           }
         }
 
-        if (ppt->has_lrs_pt == _TRUE_) {
+        if (pba->has_lrs == _TRUE_) {
           index_pt = 0;
           for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
             for(l=0; l<=ppv->l_max_lrs; l++){
@@ -5106,7 +5110,7 @@ int perturb_vector_init(
         }
       }
 
-      if (ppt->has_lrs_pt == _TRUE_) {
+      if (pba->has_lrs == _TRUE_) {
 
         /* -- case of switching on lrs fluid
            approximation. Provide correct initial conditions to new set
@@ -5274,82 +5278,82 @@ int perturb_vector_init(
         /* -- case of switching off lrs fast oscillation
            approximation. Provide correct initial conditions to new set
            of variables */
-
-        if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_on) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)) {
-
-          if (ppt->perturbations_verbose>2)
-            fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
-
-          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
-
-            ppv->y[ppv->index_pt_delta_g] =
-              ppw->pv->y[ppw->pv->index_pt_delta_g];
-
-            ppv->y[ppv->index_pt_theta_g] =
-              ppw->pv->y[ppw->pv->index_pt_theta_g];
-          }
-
-          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
-
-            ppv->y[ppv->index_pt_shear_g] =
-              ppw->pv->y[ppw->pv->index_pt_shear_g];
-
-            ppv->y[ppv->index_pt_l3_g] =
-              ppw->pv->y[ppw->pv->index_pt_l3_g];
-
-            for (l = 4; l <= ppw->pv->l_max_g; l++) {
-
-              ppv->y[ppv->index_pt_delta_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
-            }
-
-            ppv->y[ppv->index_pt_pol0_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol0_g];
-
-            ppv->y[ppv->index_pt_pol1_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol1_g];
-
-            ppv->y[ppv->index_pt_pol2_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol2_g];
-
-            ppv->y[ppv->index_pt_pol3_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol3_g];
-
-            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
-
-              ppv->y[ppv->index_pt_pol0_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
-            }
-
-          }
-
-          if (pba->has_ur == _TRUE_) {
-
+        if(ppt->has_lrs_pt==_TRUE_)
+          if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_on) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)) {
+            
+            if (ppt->perturbations_verbose>2)
+              fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
+            
             if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              ppv->y[ppv->index_pt_delta_g] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g];
 
+              ppv->y[ppv->index_pt_theta_g] =
+                ppw->pv->y[ppw->pv->index_pt_theta_g];
+            }
+            
+            if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+              
+              ppv->y[ppv->index_pt_shear_g] =
+                ppw->pv->y[ppw->pv->index_pt_shear_g];
+              
+              ppv->y[ppv->index_pt_l3_g] =
+                ppw->pv->y[ppw->pv->index_pt_l3_g];
+              
+              for (l = 4; l <= ppw->pv->l_max_g; l++) {
+                
+                ppv->y[ppv->index_pt_delta_g+l] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+              }
+              
+              ppv->y[ppv->index_pt_pol0_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g];
+              
+              ppv->y[ppv->index_pt_pol1_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol1_g];
+              
+              ppv->y[ppv->index_pt_pol2_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol2_g];
+              
+              ppv->y[ppv->index_pt_pol3_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol3_g];
+              
+              for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+                
+                ppv->y[ppv->index_pt_pol0_g+l] =
+                  ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+              }
+              
+            }
+            
+            if (pba->has_ur == _TRUE_) {
+              
+              if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+                
+                
+                ppv->y[ppv->index_pt_delta_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_ur];
+                
+                ppv->y[ppv->index_pt_theta_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+                ppv->y[ppv->index_pt_shear_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_shear_ur];
+                
+                if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
 
-              ppv->y[ppv->index_pt_delta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_delta_ur];
-
-              ppv->y[ppv->index_pt_theta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_theta_ur];
-
-              ppv->y[ppv->index_pt_shear_ur] =
-                ppw->pv->y[ppw->pv->index_pt_shear_ur];
-
-              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
-
-                ppv->y[ppv->index_pt_l3_ur] =
-                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
-
+                  ppv->y[ppv->index_pt_l3_ur] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                  
                 for (l=4; l <= ppv->l_max_ur; l++)
                   ppv->y[ppv->index_pt_delta_ur+l] =
                     ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
 
+                }
               }
             }
-          }
-
+            
           if (pba->has_idr == _TRUE_){
             if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
 
@@ -5728,7 +5732,7 @@ int perturb_initial_conditions(struct precision * ppr,
       }
     }
 
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       rho_r += ppw->pvecback[pba->index_bg_rho_lrs_F];
       rho_nu += ppw->pvecback[pba->index_bg_rho_lrs_F];
     }
@@ -5869,7 +5873,7 @@ int perturb_initial_conditions(struct precision * ppr,
       
       /* all relativistic relics: ur, early ncdm, dr */
 
-      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_) || (pba->has_idr == _TRUE_) || (ppt->has_lrs_pt == _TRUE_)) {
+      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_) || (pba->has_idr == _TRUE_) || (pba->has_lrs == _TRUE_)) {
 
         delta_ur = ppw->pv->y[ppw->pv->index_pt_delta_g]; /* density of ultra-relativistic neutrinos/relics */
 
@@ -5919,7 +5923,7 @@ int perturb_initial_conditions(struct precision * ppr,
 
       ppw->pv->y[ppw->pv->index_pt_delta_cdm] = ppr->entropy_ini+3./4.*ppw->pv->y[ppw->pv->index_pt_delta_g];
 
-      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_)) {
+      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_)) {
 
         delta_ur = ppw->pv->y[ppw->pv->index_pt_delta_g];
         theta_ur = ppw->pv->y[ppw->pv->index_pt_theta_g];
@@ -5951,7 +5955,7 @@ int perturb_initial_conditions(struct precision * ppr,
 
       }
 
-      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_)) {
+      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_)) {
 
         delta_ur = ppw->pv->y[ppw->pv->index_pt_delta_g];
         theta_ur = ppw->pv->y[ppw->pv->index_pt_theta_g];
@@ -5967,7 +5971,7 @@ int perturb_initial_conditions(struct precision * ppr,
 
     if ((ppt->has_nid == _TRUE_) && (index_ic == ppt->index_ic_nid)) {
 
-      class_test((pba->has_ur == _FALSE_) && (pba->has_ncdm == _FALSE_) && (ppt->has_lrs_pt == _FALSE_),
+      class_test((pba->has_ur == _FALSE_) && (pba->has_ncdm == _FALSE_) && (pba->has_lrs == _FALSE_),
                  ppt->error_message,
                  "not consistent to ask for NID in absence of ur, ncdm or lrs species!");
 
@@ -5999,7 +6003,7 @@ int perturb_initial_conditions(struct precision * ppr,
 
     if ((ppt->has_niv == _TRUE_) && (index_ic == ppt->index_ic_niv)) {
 
-      class_test((pba->has_ur == _FALSE_) && (pba->has_ncdm == _FALSE_) && (ppt->has_lrs_pt == _FALSE_),
+      class_test((pba->has_ur == _FALSE_) && (pba->has_ncdm == _FALSE_) && (pba->has_lrs == _FALSE_),
                  ppt->error_message,
                  "not consistent to ask for NIV in absence of ur, ncdm or lrs species!");
 
@@ -6123,7 +6127,7 @@ int perturb_initial_conditions(struct precision * ppr,
            +ppw->pvecback[pba->index_bg_phi_prime_scf]*alpha_prime);
       }
 
-      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_)  || (pba->has_idr == _TRUE_) || (ppt->has_lrs_pt == _TRUE_)) {
+      if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_)  || (pba->has_idr == _TRUE_) || (pba->has_lrs == _TRUE_)) {
 
         delta_ur -= 4.*a_prime_over_a*alpha;
         theta_ur += k*k*alpha;
@@ -6190,7 +6194,7 @@ int perturb_initial_conditions(struct precision * ppr,
       }
     }
 
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       idx = ppw->pv->index_pt_psi0_lrs;
       for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q++) {
 
@@ -6744,7 +6748,7 @@ int perturb_timescale(
 
     *timescale = tau_h;
 
-    if ((ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) || (pba->has_ncdm == _TRUE_) || (ppt->has_lrs_pt == _TRUE_))
+    if ((ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) || (pba->has_ncdm == _TRUE_) || (pba->has_lrs == _TRUE_))
       *timescale = MIN(tau_k,*timescale);
 
     if (ppw->approx[ppw->index_ap_tca] == (int)tca_off) {
@@ -7828,7 +7832,7 @@ int perturb_total_stress_energy(
           }
         }
 
-        if (ppt->has_lrs_pt == _TRUE_) {
+        if (pba->has_lrs == _TRUE_) {
           /* (3 p_lrs_F) is the "relativistic" contribution to rho_lrs */
           rho_relativistic += 3.*ppw->pvecback[pba->index_bg_p_lrs_F];
         }
@@ -9064,7 +9068,7 @@ int perturb_print_variables(double tau,
       }
     }
     /* Scalar-mediated long range interaction */
-    if ((ppt->has_lrs_pt == _TRUE_) && ((ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_) || (ppt->has_source_delta_m == _TRUE_))) {
+    if ((pba->has_lrs == _TRUE_) && ((ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_) || (ppt->has_source_delta_m == _TRUE_))) {
       class_store_double(dataptr, delta_lrs, _TRUE_, storeidx);
       class_store_double(dataptr, theta_lrs, _TRUE_, storeidx);
       class_store_double(dataptr, shear_lrs, _TRUE_, storeidx);
@@ -10174,20 +10178,20 @@ int perturb_derivs(double tau,
 
     /** - ---> Scalar-mediated long range interaction*/
     //TBC: curvature in all lrs
-    if (ppt->has_lrs_pt == _TRUE_) {
+    if (pba->has_lrs == _TRUE_) {
       
       idx = pv->index_pt_psi0_lrs;
 
       double delta_phi;
       double delta_phi_prime;
-
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
-        delta_phi = y[ppw->pv->index_pt_lrs];
-	delta_phi_prime = y[ppw->pv->index_pt_lrs_prime];
-      } else{
-	delta_phi = ppw->delta_phi_lrsfo;
-	delta_phi_prime = 0;
-      }
+      if (ppt->has_lrs_pt == _TRUE_)
+        if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
+          delta_phi = y[ppw->pv->index_pt_lrs];
+          delta_phi_prime = y[ppw->pv->index_pt_lrs_prime];
+        } else{
+          delta_phi = ppw->delta_phi_lrsfo;
+          delta_phi_prime = 0;
+        }
       
       /** - ----> first case: use a fluid approximation (lrsfa) */
       //TBC: curvature
