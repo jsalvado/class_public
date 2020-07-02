@@ -368,6 +368,14 @@ int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message)
  * @param phi_M  Output: scalar field times massnumber of momenta/weights
  */
 int getPhi_M(struct background * pba, double z, double * phi_M){
+  double m_F_over_T = pba->lrs_m_F_over_T0 / (1.+z);
+  if(m_F_over_T < 1e-5){ // Analytic result in the ultrarelativistic regime
+    double T = pba->lrs_m_F / m_F_over_T; // Temperature [eV]
+    *phi_M = - pba->lrs_g_F/24. * pba->lrs_g_over_M * m_F_over_T * CUB(T) /
+      (1 + pba->lrs_g_F/24. * SQR(pba->lrs_g_over_M) * SQR(T));
+    return _SUCCESS_;
+  }
+  
   double x2 = 0, x1=-pba->lrs_m_F/pba->lrs_g_over_M; // We know that -m <= g*phi <= 0. This ensures that mTilde will always be positive
   struct background_parameters_and_redshift bpaz;
   bpaz.pba = pba;
