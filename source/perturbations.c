@@ -5444,17 +5444,11 @@ int perturb_vector_init(
             }
           }
           
-          a = ppw->pvecback[pba->index_bg_a];
-          
-          if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
-              ppv->y[ppv->index_pt_lrs] = ppw->delta_phi_lrsfo; // (see L4390)
-              ppv->y[ppv->index_pt_lrs_prime] = 0; // (see L4390)
-            }
-        }
+	  ppv->y[ppv->index_pt_lrs] = ppw->delta_phi_lrsfo; // (see L4427)
+	  ppv->y[ppv->index_pt_lrs_prime] = 0; // (see L4427)
+	}
       }
     }
-    
   
 
     /** - --> (b) for the vector mode */
@@ -8895,7 +8889,7 @@ int perturb_print_variables(double tau,
 
       double delta_phi=0;
       if (ppt->has_lrs_pt == _TRUE_){
-        if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off)
+        if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)
           delta_phi = y[ppw->pv->index_pt_lrs];
         else
           delta_phi = ppw->delta_phi_lrsfo;
@@ -9260,7 +9254,7 @@ int perturb_print_variables(double tau,
 
       double delta_phi=0;
       if (ppt->has_lrs_pt == _TRUE_)
-        if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off)
+        if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)
           delta_phi = y[ppw->pv->index_pt_lrs];
         else
           delta_phi = ppw->delta_phi_lrsfo;
@@ -10235,7 +10229,7 @@ int perturb_derivs(double tau,
       double delta_phi=0;
       double delta_phi_prime=0;
       if (ppt->has_lrs_pt == _TRUE_)
-        if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfo_off){
+        if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off){
           delta_phi = y[ppw->pv->index_pt_lrs];
           delta_phi_prime = y[ppw->pv->index_pt_lrs_prime];
         } else{
