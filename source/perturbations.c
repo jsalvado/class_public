@@ -27,7 +27,7 @@
 #include "perturbations.h"
 #include "longrange.h"
 
-//#define JORDBG
+#define JORDBG
 
 /**
  * Source function \f$ S^{X} (k, \tau) \f$ at a given conformal time tau.
@@ -3922,8 +3922,16 @@ int perturb_vector_init(
       /* lrs field equation */
       if(ppt->has_lrs_pt == _TRUE_){
         if(ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off ) {
+#ifdef JORDBG
+          printf("index lrsptb: %d\n", index_pt);
+#endif
+
           class_define_index(ppv->index_pt_lrs,ppt->has_lrs_pt,index_pt,1);       /* lrs  jordi*/
           class_define_index(ppv->index_pt_lrs_prime,ppt->has_lrs_pt,index_pt,1); /* lrs' jordi*/
+#ifdef JORDBG
+          printf("index lrspta: %d\n", index_pt);
+#endif
+
         }
       }
       
@@ -9912,6 +9920,14 @@ int perturb_derivs(double tau,
 	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*g_over_mT * phi_Msq*SQR(_Mpc_times_eV))*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV)
 	    - a2*rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs] * phi_dot_over_H * (SQR(pba->lrs_M_phi) + g_over_mT * phi_Msq) /
 	    (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_Msq * phi_dot_over_H) * SQR(_Mpc_times_eV);// -a^2 g/mT (deltarho-3deltap) The last factor convers eV^3 to eV/Mpc^2
+#ifdef JORDBG
+          printf("terms 1: %f\n", 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]);
+          printf("terms 2: %f\n", metric_continuity*pvecback[pba->index_bg_lrs_phi_prime]);
+          printf("terms 3: %f\n", (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*g_over_mT * phi_Msq*SQR(_Mpc_times_eV))*y[pv->index_pt_lrs]);
+          printf("terms 4: %f\n", a2*rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs] * phi_dot_over_H * (SQR(pba->lrs_M_phi) + g_over_mT * phi_Msq) /
+	    (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_Msq * phi_dot_over_H) * SQR(_Mpc_times_eV));
+#endif
+
 	} else{
 	  // Compute rhs over a^2
 	  double rhs = 0;
@@ -9922,6 +9938,9 @@ int perturb_derivs(double tau,
 	    q2 = q*q;
 	    epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 	    rhs += q2 * SQR(ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a)/epsilon * pba->w_lrs[index_q]*y[ppw->pv->index_pt_psi0_lrs];
+#ifdef JORDBG
+            printf("terms eps: %f\n", epsilon);
+#endif
 	  }
 	  rhs *= factor;
 	  rhs /= _eV4_to_rho_class;
@@ -9931,7 +9950,15 @@ int perturb_derivs(double tau,
 	    - 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]
 	    - metric_continuity*pvecback[pba->index_bg_lrs_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: phi_prime is eV/Mpc and metric_continuity gives another Mpc^-1)
 	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq])*y[pv->index_pt_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and lrs is eV)
-	    + a2*rhs * SQR(_Mpc_times_eV);// The last factor convers eV^3 to eV/Mpc^2
+           + a2*rhs * SQR(_Mpc_times_eV);// The last factor convers eV^3 to eV/Mpc^2
+#ifdef JORDBG
+          printf("terms 1: %f\n", 2.*a_prime_over_a*y[pv->index_pt_lrs_prime]);
+          printf("terms 2: %f\n", metric_continuity*pvecback[pba->index_bg_lrs_phi_prime]);
+          printf("terms 3: %f\n", (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq])*y[pv->index_pt_lrs]);
+          printf("terms 4: %f\n", a2*rhs * SQR(_Mpc_times_eV));
+#endif
+
+          
 	}
       }
     }
