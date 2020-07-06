@@ -208,7 +208,7 @@ struct background
   int index_bg_rho_lrs;       /**< density of the fermion+scalar system in the presence of a long-range self interaction */
   int index_bg_p_lrs;         /**< pressure of the fermion+scalar system in the presence of a long-range self interaction */
   int index_bg_rho_lrs_F;     /**< density of the fermion in the presence of a long-range self interaction */
-  int index_bg_lrs_phi_prime; /**< lrs scalar field prime*/
+  int index_bg_lrs_M_phi_prime; /**< lrs scalar field prime times mass*/
   int index_bg_lrs_MTsq_over_Msq; /**< Scalar thermal mass squared over vacuum mass squared*/
   int index_bg_p_lrs_F;       /**< pressure of the fermion in the presence of a long-range self interaction */
   int index_bg_pseudo_p_lrs_F;/**< pseudo-pressure of the fermion in the presence of a long-range self interaction */

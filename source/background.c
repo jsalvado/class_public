@@ -467,11 +467,10 @@ int background_functions(
     //ivan
     double T = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
 
-    pvecback[pba->index_bg_lrs_phi_prime] =
+    pvecback[pba->index_bg_lrs_M_phi_prime] =
       pba->lrs_g_over_M*pow(T,3)*I1/(1+SQR(pba->lrs_g_over_M)*SQR(T)*I2)* // Mphidot_over_H [eV^2]
       pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
-      a_rel* //Mphiprime [eV^2/Mpc]
-      1/pba->lrs_M_phi; // phiprime [eV/Mpc]
+      a_rel; //Mphiprime [eV^2/Mpc]
 
     pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T) * I2; // Scalar thermal mass squared over vacuum mass squared
       
@@ -1083,7 +1082,7 @@ int background_indices(
   class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_rho_lrs_F,pba->has_lrs,index_bg,1);
-  class_define_index(pba->index_bg_lrs_phi_prime,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_lrs_M_phi_prime,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_lrs_MTsq_over_Msq,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_pseudo_p_lrs_F,pba->has_lrs,index_bg,1);

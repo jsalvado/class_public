@@ -490,8 +490,8 @@ struct perturb_vector
   int index_pt_shear_idr; /**< shear of interacting dark radiation */
   int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
   int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
-  int index_pt_lrs;       /**< lrs' jordi  */
-  int index_pt_lrs_prime; /**< lrs'' jordi */
+  int index_pt_Mlrs;       /**< M*lrs jordi  */
+  int index_pt_Mlrs_prime; /**< M*lrs' jordi */
 
   
 /* perturbed recombination */
@@ -603,7 +603,7 @@ struct perturb_workspace
   double delta_p_lrs_F; /**< relative density perturbation of scalar-mediated long range interaction */
   double theta_lrs_F;	/**< velocity divergence theta of scalar-mediated long range interaction */
   double shear_lrs_F;	/**< shear for scalar-mediated long range interaction */
-  double delta_phi_lrsfo; /**< delta_phi in the fast oscillation approximation */
+  double M_delta_phi_lrsfo; /**< delta_phi in the fast oscillation approximation */
 
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */
