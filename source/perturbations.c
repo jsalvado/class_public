@@ -9955,13 +9955,13 @@ int perturb_derivs(double tau,
 	  }
 	  rhs *= factor;
 	  rhs /= _eV4_to_rho_class;
-	  rhs *= - pba->lrs_M_phi * pba->lrs_g_over_M; // [eV^4]
+	  rhs *= - pba->lrs_M_phi * pba->lrs_g_over_M; // [eV^3]
 	  
 	  dy[pv->index_pt_Mlrs_prime] =
 	    - 2.*a_prime_over_a*y[pv->index_pt_Mlrs_prime]
 	    - metric_continuity*pvecback[pba->index_bg_lrs_M_phi_prime] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: M_phi_prime is eV^2/Mpc and metric_continuity gives another Mpc^-1)
 	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq])*y[pv->index_pt_Mlrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and Mlrs is eV^2)
-           + a2*rhs * SQR(_Mpc_times_eV);// The last factor convers eV^4 to eV/Mpc^2
+           + a2 * pba->lrs_M_phi * rhs * SQR(_Mpc_times_eV);// The last factor convers eV^4 to eV^2/Mpc^2
 #ifdef JORDBG
           printf("terms 1: %f\n", 2.*a_prime_over_a*y[pv->index_pt_Mlrs_prime]);
           printf("terms 2: %f\n", metric_continuity*pvecback[pba->index_bg_lrs_M_phi_prime]);
