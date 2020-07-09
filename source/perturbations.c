@@ -5338,7 +5338,7 @@ int perturb_vector_init(
         /* -- case of switching on lrs fast oscillation
            approximation. Provide correct initial conditions to new set
            of variables */
-      if((ppt->has_lrs==_TRUE) && (ppt->has_lrs_pt==_TRUE_)){
+      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
         if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_off) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_on)) {
           
           if (ppt->perturbations_verbose>2)
@@ -5472,7 +5472,7 @@ int perturb_vector_init(
         /* -- case of switching off lrs fast oscillation
            approximation. Provide correct initial conditions to new set
            of variables */
-      if(ppt->has_lrs_pt==_TRUE_){
+      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
         if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_on) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)) {
           
           if (ppt->perturbations_verbose>2)
