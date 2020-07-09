@@ -3618,6 +3618,10 @@ int perturb_find_approximation_switches(
                 (interval_approx[index_switch][ppw->index_ap_lrsfo]==(int)lrsfo_off)) {
               fprintf(stdout,"Mode k=%e: will switch off lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
+	    if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo]==(int)lrsfo_off) &&
+                (interval_approx[index_switch][ppw->index_ap_lrsfo]==(int)lrsfo_on)) {
+              fprintf(stdout,"Mode k=%e: will switch on lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
+            }
           }
         }
         
@@ -5331,6 +5335,140 @@ int perturb_vector_init(
         }
       }
 
+        /* -- case of switching on lrs fast oscillation
+           approximation. Provide correct initial conditions to new set
+           of variables */
+      if((ppt->has_lrs==_TRUE) && (ppt->has_lrs_pt==_TRUE_)){
+        if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_off) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_on)) {
+          
+          if (ppt->perturbations_verbose>2)
+            fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
+          
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+            
+            ppv->y[ppv->index_pt_delta_g] =
+              ppw->pv->y[ppw->pv->index_pt_delta_g];
+            
+            ppv->y[ppv->index_pt_theta_g] =
+              ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+          
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+            
+            ppv->y[ppv->index_pt_shear_g] =
+              ppw->pv->y[ppw->pv->index_pt_shear_g];
+            
+            ppv->y[ppv->index_pt_l3_g] =
+              ppw->pv->y[ppw->pv->index_pt_l3_g];
+            
+            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+              
+              ppv->y[ppv->index_pt_delta_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+            }
+            
+            ppv->y[ppv->index_pt_pol0_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+            
+            ppv->y[ppv->index_pt_pol1_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+            
+            ppv->y[ppv->index_pt_pol2_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+            
+            ppv->y[ppv->index_pt_pol3_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+            
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+              
+              ppv->y[ppv->index_pt_pol0_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+            }
+            
+          }
+            
+          if (pba->has_ur == _TRUE_) {
+            
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              
+              ppv->y[ppv->index_pt_delta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+              
+              ppv->y[ppv->index_pt_theta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+              ppv->y[ppv->index_pt_shear_ur] =
+                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+              
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+                
+                ppv->y[ppv->index_pt_l3_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                
+                for (l=4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur+l] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+                
+              }
+            }
+          }
+          
+          if (pba->has_idr == _TRUE_){
+            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+              
+              ppv->y[ppv->index_pt_delta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+              
+              ppv->y[ppv->index_pt_theta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+              
+              if (ppt->idr_nature == idr_free_streaming){
+                
+                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+                  
+                  ppv->y[ppv->index_pt_shear_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+                  
+                  ppv->y[ppv->index_pt_l3_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+                  
+                  for (l=4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr+l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+                }
+              }
+            }
+          }
+          
+          if (pba->has_ncdm == _TRUE_) {
+            index_pt = 0;
+            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+                     ppv->q_size_ncdm is updated.*/
+                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+                  index_pt++;
+                }
+              }
+            }
+          }
+          
+          index_pt = 0;
+          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+            for(l=0; l<=ppv->l_max_lrs; l++){
+              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+                 ppv->q_size_lrs is updated.*/
+              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+              index_pt++;
+            }
+          }
+	}
+      }
+
         /* -- case of switching off lrs fast oscillation
            approximation. Provide correct initial conditions to new set
            of variables */
@@ -5338,7 +5476,7 @@ int perturb_vector_init(
         if ((pa_old[ppw->index_ap_lrsfo] == (int)lrsfo_on) && (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off)) {
           
           if (ppt->perturbations_verbose>2)
-            fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
+            fprintf(stdout,"Mode k=%e: switch off lrs fast oscillation approximation at tau=%e\n",k,tau);
           
           if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
             
@@ -5914,14 +6052,24 @@ int perturb_initial_conditions(struct precision * ppr,
 
       if(ppt->has_lrs_pt == _TRUE_){
         if (ppw->approx[ppw->index_ap_lrsfo] == (int)lrsfo_off) {
-          //jordi, initial conditions
-          
-          ppw->pv->y[ppw->pv->index_pt_Mlrs] = 0.;
-          /*  a*a/k/k/ppw->pvecback[pba->index_bg_phi_prime_scf]*k*ktau_three/4.*1./(4.-6.*(1./3.)+3.*1.) * (ppw->pvecback[pba->index_bg_rho_scf] + ppw->pvecback[pba->index_bg_p_scf])* ppr->curvature_ini * s2_squared; */
-          
+	  // Set the initial conditions at the potential minimum
+	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+	  double rhs = 0;
+	  double factor = pba->factor_lrs*pow(pba->a_today/a,4);
+	  double q2;
+	  double a2 = a*a;
+	  for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
+	    q = pba->q_lrs[index_q];
+	    q2 = q*q;
+	    epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
+	    rhs += q2 * ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a/(epsilon*T_F) * pba->w_lrs[index_q]*ppw->pv->y[ppw->pv->index_pt_psi0_lrs];
+	  }
+	  rhs *= factor;
+	  rhs /= _eV4_to_rho_class;
+	  rhs *= - pba->lrs_g_over_M;
+            
+          ppw->pv->y[ppw->pv->index_pt_Mlrs] = rhs / (k*k/a2/SQR(pba->lrs_M_phi * _Mpc_times_eV) + 1 + ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]);
           ppw->pv->y[ppw->pv->index_pt_Mlrs_prime] = 0.;
-          /* delta_fld expression * rho_scf with the w = 1/3, c_s = 1
-             a*a/ppw->pvecback[pba->index_bg_phi_prime_scf]*( - ktau_two/4.*(1.+1./3.)*(4.-3.*1.)/(4.-6.*(1/3.)+3.*1.)*ppw->pvecback[pba->index_bg_rho_scf] - ppw->pvecback[pba->index_bg_dV_scf]*ppw->pv->y[ppw->pv->index_pt_phi_scf])* ppr->curvature_ini * s2_squared; */
         }
       }
 
