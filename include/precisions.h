@@ -326,9 +326,9 @@ class_precision_parameter(lrs_fluid_trigger_tau_over_tau_k,double,32.0)
 
 /**
  * When to switch on lrs fast oscillation approximation
- * It is done if sqrt((M^2+MT^2)/(k^2/a^2+H^2)) > lrs_fastosc_trigger_M_over_kH
+ * It is done if sqrt((M^2+MT^2)/(k^2+H^2)) > lrs_fastosc_trigger_M_over_kH
  */
-class_precision_parameter(lrs_fastosc_trigger_M_over_kH,double,1e2)
+class_precision_parameter(lrs_fastosc_trigger_M_over_kH,double,1e4)
 
 /**
  * whether CMB source functions can be approximated as zero when
