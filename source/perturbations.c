@@ -6627,8 +6627,6 @@ int perturb_approximations(
   /* (c) time scale of recombination, \f$ \tau_{\gamma} = 1/\kappa' \f$ */
   double tau_c;
 
- short NotDone=_TRUE_;
-  
   /** - compute Fourier mode time scale = \f$ \tau_k = 1/k \f$ */
 
   class_test(k == 0.,
@@ -6692,9 +6690,8 @@ int perturb_approximations(
       /** - ----> (b.2.b) check whether tight-coupling approximation should be on */
 
       if ((tau_c/tau_h < ppr->tight_coupling_trigger_tau_c_over_tau_h) &&
-          (tau_c/tau_k < ppr->tight_coupling_trigger_tau_c_over_tau_k) && NotDone==_TRUE_) {
+          (tau_c/tau_k < ppr->tight_coupling_trigger_tau_c_over_tau_k)) {
         ppw->approx[ppw->index_ap_tca] = (int)tca_on;
-	NotDone=_FALSE_;
       }
       else {
         ppw->approx[ppw->index_ap_tca] = (int)tca_off;
@@ -6718,10 +6715,9 @@ int perturb_approximations(
 
         if ((1./tau_h/ppw->pvecthermo[pth->index_th_dmu_idm_dr] < ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_h) &&
             (1./tau_k/ppw->pvecthermo[pth->index_th_dmu_idm_dr] < ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_k) &&
-            (pth->nindex_idm_dr>=2) && (ppt->idr_nature == idr_free_streaming) && NotDone==_TRUE_) {
+            (pth->nindex_idm_dr>=2) && (ppt->idr_nature == idr_free_streaming)) {
           ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_on;
-	  NotDone=_FALSE_;
-	}
+        }
         else{
           ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_off;
           //printf("tca_idm_dr_off = %d\n",tau);
@@ -6733,8 +6729,8 @@ int perturb_approximations(
 
     if ((tau/tau_k > ppr->radiation_streaming_trigger_tau_over_tau_k) &&
         (tau > pth->tau_free_streaming) &&
-        (ppr->radiation_streaming_approximation != rsa_none) && NotDone==_TRUE_) {
-      NotDone=_FALSE_;
+        (ppr->radiation_streaming_approximation != rsa_none)) {
+
       ppw->approx[ppw->index_ap_rsa] = (int)rsa_on;
     }
     else {
@@ -6748,8 +6744,8 @@ int perturb_approximations(
 
         if ((tau/tau_k > ppr->idr_streaming_trigger_tau_over_tau_k) &&
             ((tau > pth->tau_idr_free_streaming) && (pth->nindex_idm_dr>=2)) &&
-            (ppr->idr_streaming_approximation != rsa_idr_none) && NotDone==_TRUE_){
-	  NotDone=_FALSE_;
+            (ppr->idr_streaming_approximation != rsa_idr_none)){
+
           ppw->approx[ppw->index_ap_rsa_idr] = (int)rsa_idr_on;
         }
 
@@ -6761,8 +6757,8 @@ int perturb_approximations(
       else{
         if ((tau/tau_k > ppr->idr_streaming_trigger_tau_over_tau_k) &&
             (tau > pth->tau_idr_free_streaming) &&
-            (ppr->idr_streaming_approximation != rsa_idr_none) && NotDone==_TRUE_){
-	  NotDone=_FALSE_;
+            (ppr->idr_streaming_approximation != rsa_idr_none)){
+
           ppw->approx[ppw->index_ap_rsa_idr] = (int)rsa_idr_on;
         }
 
@@ -6775,8 +6771,8 @@ int perturb_approximations(
     if (pba->has_ur == _TRUE_) {
 
       if ((tau/tau_k > ppr->ur_fluid_trigger_tau_over_tau_k) &&
-          (ppr->ur_fluid_approximation != ufa_none) && NotDone==_TRUE_) {
-	NotDone=_FALSE_;
+          (ppr->ur_fluid_approximation != ufa_none)) {
+
         ppw->approx[ppw->index_ap_ufa] = (int)ufa_on;
       }
       else {
@@ -6787,8 +6783,8 @@ int perturb_approximations(
     if (pba->has_ncdm == _TRUE_) {
 
       if ((tau/tau_k > ppr->ncdm_fluid_trigger_tau_over_tau_k) &&
-          (ppr->ncdm_fluid_approximation != ncdmfa_none) && NotDone==_TRUE_) {
-	NotDone=_FALSE_;
+          (ppr->ncdm_fluid_approximation != ncdmfa_none)) {
+
         ppw->approx[ppw->index_ap_ncdmfa] = (int)ncdmfa_on;
       }
       else {
@@ -6797,11 +6793,10 @@ int perturb_approximations(
     }
 
     if (ppt->has_lrs_pt == _TRUE_) {
-      if ( (SQR(pba->lrs_M_phi * _Mpc_times_eV)*(1 + ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq])/
+      if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)*(1 + ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq])/
 	   (SQR(k/ppw->pvecback[pba->index_bg_a]) + SQR(ppw->pvecback[pba->index_bg_H])) >
-	   SQR(ppr->lrs_fastosc_trigger_M_over_kH)) && NotDone==_TRUE_){
-	NotDone=_FALSE_;
-	ppw->approx[ppw->index_ap_lrsfo] = (int)lrsfo_on;
+	   SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
+        ppw->approx[ppw->index_ap_lrsfo] = (int)lrsfo_on;
       }
       else {
         ppw->approx[ppw->index_ap_lrsfo] = (int)lrsfo_off;
@@ -6810,8 +6805,8 @@ int perturb_approximations(
       
     if (pba->has_lrs == _TRUE_) {
       if ((tau/tau_k > ppr->lrs_fluid_trigger_tau_over_tau_k) &&
-          (ppr->lrs_fluid_approximation != lrsfa_none) && NotDone==_TRUE_) {
-        NotDone=_FALSE_;
+          (ppr->lrs_fluid_approximation != lrsfa_none)) {
+        
         ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfa_on;
       }
       else {
@@ -6853,9 +6848,8 @@ int perturb_approximations(
 
       /** - ----> (b.2.b) check whether tight-coupling approximation should be on */
       if ((tau_c/tau_h < ppr->tight_coupling_trigger_tau_c_over_tau_h) &&
-          (tau_c/tau_k < ppr->tight_coupling_trigger_tau_c_over_tau_k)&& NotDone==_TRUE_) {
-	NotDone==_FALSE_;
-	ppw->approx[ppw->index_ap_tca] = (int)tca_on;
+          (tau_c/tau_k < ppr->tight_coupling_trigger_tau_c_over_tau_k)) {
+        ppw->approx[ppw->index_ap_tca] = (int)tca_on;
       }
       else {
         ppw->approx[ppw->index_ap_tca] = (int)tca_off;
@@ -6864,8 +6858,8 @@ int perturb_approximations(
 
     if ((tau/tau_k > ppr->radiation_streaming_trigger_tau_over_tau_k) &&
         (tau > pth->tau_free_streaming) &&
-        (ppr->radiation_streaming_approximation != rsa_none) && NotDone==_TRUE_) {
-      NotDone==_FALSE_;
+        (ppr->radiation_streaming_approximation != rsa_none)) {
+
       ppw->approx[ppw->index_ap_rsa] = (int)rsa_on;
     }
     else {
