@@ -2646,8 +2646,8 @@ int perturb_workspace_init(
     if (pba->has_lrs == _TRUE_)
       ppw->approx[ppw->index_ap_lrsfa]=(int)lrsfa_off;
     if (ppt->has_lrs_pt == _TRUE_){
-      ppw->approx[ppw->index_ap_lrsfo1]=(int)lrsfo_off;
-      ppw->approx[ppw->index_ap_lrsfo2]=(int)lrsfo_off;
+      ppw->approx[ppw->index_ap_lrsfo1]=(int)lrsfo1_off;
+      ppw->approx[ppw->index_ap_lrsfo2]=(int)lrsfo2_off;
     }
   }
 
@@ -3616,12 +3616,12 @@ int perturb_find_approximation_switches(
             }
           }
           if (ppt->has_lrs_pt == _TRUE_) {
-            if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo_on || interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo_on) &&
-                (interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo_off && interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo_off)) {
+            if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_on) &&
+                (interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off && interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off)) {
               fprintf(stdout,"Mode k=%e: will switch off lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
-	    if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo_off && interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo_off) &&
-                (interval_approx[index_switch][ppw->index_ap_lrsfo1]==(int)lrsfo_on || interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo_on)) {
+	    if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_off && interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_off) &&
+                (interval_approx[index_switch][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_on)) {
               fprintf(stdout,"Mode k=%e: will switch on lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
           }
@@ -3927,7 +3927,7 @@ int perturb_vector_init(
     if (pba->has_lrs == _TRUE_) {
       /* lrs field equation */
       if(ppt->has_lrs_pt == _TRUE_){
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off ) {
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off ) {
 #ifdef JORDBG
           printf("index lrsptb: %d\n", index_pt);
 #endif
@@ -4528,7 +4528,7 @@ int perturb_vector_init(
           }
 
           if (ppt->has_lrs_pt == _TRUE_) 
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4614,7 +4614,7 @@ int perturb_vector_init(
           }
 
           if (ppt->has_lrs_pt == _TRUE_) 
-          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
             ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
             ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
           }
@@ -4743,7 +4743,7 @@ int perturb_vector_init(
             }
 
             if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4857,7 +4857,7 @@ int perturb_vector_init(
             }
           }
           if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4985,7 +4985,7 @@ int perturb_vector_init(
               }
             }
             if (ppt->has_lrs_pt == _TRUE_)
-              if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+              if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
                 ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
                 ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
               }
@@ -5152,7 +5152,7 @@ int perturb_vector_init(
             }
           }
           if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off  && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off  && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -5283,7 +5283,7 @@ int perturb_vector_init(
           }
           
           if (ppt->has_lrs_pt == _TRUE_) 
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -5302,7 +5302,7 @@ int perturb_vector_init(
           factor = pba->factor_lrs*pow(pba->a_today/a,4);
 	  double M_delta_phi=0; // eV^2
 	  if (ppt->has_lrs_pt == _TRUE_){
-	    if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off)
+	    if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
 	      M_delta_phi = ppw->pv->y[ppw->pv->index_pt_Mlrs];
 	    else
 	      M_delta_phi = ppw->M_delta_phi_lrsfo; // (see L4435)
@@ -5341,7 +5341,7 @@ int perturb_vector_init(
            approximation. Provide correct initial conditions to new set
            of variables */
       if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo_off && pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo_off) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_on || ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_on)) {
+        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on)) {
           
           if (ppt->perturbations_verbose>2)
             fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
@@ -5475,7 +5475,7 @@ int perturb_vector_init(
            approximation. Provide correct initial conditions to new set
            of variables */
       if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off)) {
+        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)) {
           
           if (ppt->perturbations_verbose>2)
             fprintf(stdout,"Mode k=%e: switch off lrs fast oscillation approximation at tau=%e\n",k,tau);
@@ -5748,7 +5748,7 @@ int perturb_vector_init(
         }
 
         if(ppt->has_lrs_pt ==_TRUE_)
-          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
             ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
             ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
           }
@@ -6053,7 +6053,7 @@ int perturb_initial_conditions(struct precision * ppr,
       }
 
       if(ppt->has_lrs_pt == _TRUE_){
-        if (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off) {
+        if (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
 	  // Set the initial conditions at the potential minimum
 	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
 	  double rhs = 0;
@@ -6797,15 +6797,15 @@ int perturb_approximations(
     if (ppt->has_lrs_pt == _TRUE_) {
       if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)/(SQR(k/ppw->pvecback[pba->index_bg_a])) >
 	   SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
-        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo_on;
+        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_on;
       }else{
-        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo_off;
+        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_off;
       }
       if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]/
 	   (SQR(k/ppw->pvecback[pba->index_bg_a])) >  SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
-        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo_on;
+        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_on;
       }else{
-        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo_off;
+        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_off;
       }
     }
       
@@ -7669,7 +7669,7 @@ int perturb_total_stress_energy(
       double M_delta_phi_prime=0;
 
       if (ppt->has_lrs_pt == _TRUE_)
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off){
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
           M_delta_phi=y[ppw->pv->index_pt_Mlrs];
           M_delta_phi_prime=y[ppw->pv->index_pt_Mlrs_prime];
         }else{
@@ -9061,7 +9061,7 @@ int perturb_print_variables(double tau,
 
       double M_delta_phi=0;
       if (ppt->has_lrs_pt == _TRUE_){
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off)
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
           M_delta_phi = y[ppw->pv->index_pt_Mlrs];
         else
           M_delta_phi = ppw->M_delta_phi_lrsfo;
@@ -9427,7 +9427,7 @@ int perturb_print_variables(double tau,
       
       double M_delta_phi=0;
       if (ppt->has_lrs_pt == _TRUE_)
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off)
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
           M_delta_phi = y[ppw->pv->index_pt_Mlrs];
         else
           M_delta_phi = ppw->M_delta_phi_lrsfo;
@@ -10073,7 +10073,7 @@ int perturb_derivs(double tau,
       double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
       double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
       
-      if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off){
+      if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
         /* Derivative of the field value */
         dy[pv->index_pt_Mlrs] = y[pv->index_pt_Mlrs_prime];
         /* Second derivative of the field Klein Gordon equation */
@@ -10421,7 +10421,7 @@ int perturb_derivs(double tau,
       double M_delta_phi=0;
       double M_delta_phi_prime=0;
       if (ppt->has_lrs_pt == _TRUE_)
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo_off){
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
           M_delta_phi = y[ppw->pv->index_pt_Mlrs];
           M_delta_phi_prime = y[ppw->pv->index_pt_Mlrs_prime];
         } else{
