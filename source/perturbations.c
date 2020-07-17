@@ -5607,6 +5607,145 @@ int perturb_vector_init(
 	  ppv->y[ppv->index_pt_Mlrs_prime] = 0; // (see L4435)
 	}
       }
+
+      /* -- case of switching one of the fast oscillation flags
+	 without changing the approximation scheme
+	 This happens if lrsfo1 switches from off to on while lrsfo2 is on
+	           or if lrsfo2 switches from on to off while lrsfo1 is on*/
+      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
+        if (((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on) && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) ||
+	    ((pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on)) {
+          
+          if (ppt->perturbations_verbose>2)
+            fprintf(stdout,"Mode k=%e: change one of the fast oscillation flags without switching approximation scheme at tau=%e\n",k,tau);
+          
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+            
+            ppv->y[ppv->index_pt_delta_g] =
+              ppw->pv->y[ppw->pv->index_pt_delta_g];
+            
+            ppv->y[ppv->index_pt_theta_g] =
+              ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+          
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+            
+            ppv->y[ppv->index_pt_shear_g] =
+              ppw->pv->y[ppw->pv->index_pt_shear_g];
+            
+            ppv->y[ppv->index_pt_l3_g] =
+              ppw->pv->y[ppw->pv->index_pt_l3_g];
+            
+            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+              
+              ppv->y[ppv->index_pt_delta_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+            }
+            
+            ppv->y[ppv->index_pt_pol0_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+            
+            ppv->y[ppv->index_pt_pol1_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+            
+            ppv->y[ppv->index_pt_pol2_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+            
+            ppv->y[ppv->index_pt_pol3_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+            
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+              
+              ppv->y[ppv->index_pt_pol0_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+            }
+            
+          }
+            
+          if (pba->has_ur == _TRUE_) {
+            
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              
+              ppv->y[ppv->index_pt_delta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+              
+              ppv->y[ppv->index_pt_theta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+              ppv->y[ppv->index_pt_shear_ur] =
+                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+              
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+                
+                ppv->y[ppv->index_pt_l3_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                
+                for (l=4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur+l] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+                
+              }
+            }
+          }
+          
+          if (pba->has_idr == _TRUE_){
+            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+              
+              ppv->y[ppv->index_pt_delta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+              
+              ppv->y[ppv->index_pt_theta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+              
+              if (ppt->idr_nature == idr_free_streaming){
+                
+                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+                  
+                  ppv->y[ppv->index_pt_shear_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+                  
+                  ppv->y[ppv->index_pt_l3_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+                  
+                  for (l=4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr+l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+                }
+              }
+            }
+          }
+          
+          if (pba->has_ncdm == _TRUE_) {
+            index_pt = 0;
+            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+                     ppv->q_size_ncdm is updated.*/
+                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+                  index_pt++;
+                }
+              }
+            }
+          }
+          
+          index_pt = 0;
+          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+            for(l=0; l<=ppv->l_max_lrs; l++){
+              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+                 ppv->q_size_lrs is updated.*/
+              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+              index_pt++;
+            }
+          }
+          
+	  ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
+	  ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
+	}
+      }
     }
   
 
