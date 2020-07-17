@@ -5471,13 +5471,11 @@ int perturb_vector_init(
 	}
       }
 
-      /* -- case of switching one of the fast oscillation flags
-	 without changing the approximation scheme
-	 This happens if lrsfo1 switches from off to on while lrsfo2 is on
-	           or if lrsfo2 switches from on to off while lrsfo1 is on*/
+        /* -- case of switching off lrs fast oscillation
+           approximation. Provide correct initial conditions to new set
+           of variables */
       if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if (((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on) && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) ||
-	    ((pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on)) {
+        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)) {
           
           if (ppt->perturbations_verbose>2)
             fprintf(stdout,"Mode k=%e: switch off lrs fast oscillation approximation at tau=%e\n",k,tau);
@@ -5605,8 +5603,8 @@ int perturb_vector_init(
             }
           }
           
-	  ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
-	  ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
+	  ppv->y[ppv->index_pt_Mlrs] = ppw->M_delta_phi_lrsfo; // (see L4435)
+	  ppv->y[ppv->index_pt_Mlrs_prime] = 0; // (see L4435)
 	}
       }
     }
