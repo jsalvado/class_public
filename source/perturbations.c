@@ -5742,8 +5742,6 @@ int perturb_vector_init(
             }
           }
           
-	  ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
-	  ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
 	}
       }
     }
