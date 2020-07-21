@@ -474,10 +474,10 @@ int background_functions(
 
     pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T) * I2; // Scalar thermal mass squared over vacuum mass squared
 
-    if (mT_over_T0 * a_rel > 1)
+    if (T < pba->lrs_m_F)
       class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
 		 pba->error_message,
-		 "lrs: The effective scalar mass is smaller than 10*H for T_F/mtilde = %e", 1/(a_rel * mT_over_T0));
+		 "lrs: The effective scalar mass is smaller than 10*H for T_F/m0 = %e", T/pba->lrs_m_F);
     
     /* Add up scalar and fermion */
     pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
