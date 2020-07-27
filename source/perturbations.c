@@ -7805,7 +7805,7 @@ int perturb_total_stress_energy(
       double M_delta_phi=0;
       double M_delta_phi_prime=0;
 
-      if (ppt->has_lrs_pt == _TRUE_)
+      if (ppt->has_lrs_pt == _TRUE_){
         if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
           M_delta_phi=y[ppw->pv->index_pt_Mlrs];
           M_delta_phi_prime=y[ppw->pv->index_pt_Mlrs_prime];
@@ -7839,35 +7839,8 @@ int perturb_total_stress_energy(
           ppw->M_delta_phi_lrsfo = M_delta_phi;
           M_delta_phi_prime=0.; //In the fast oscillation approximation, the field derivative is negligible as M>>H
         }
-      
-      if (ppt->gauge == synchronous){
-        delta_rho_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
-          + phi_M * M_delta_phi; // eV^4
-        delta_p_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)  
-          - phi_M * M_delta_phi;
       }
-      else{
-        /* equation for psi */
-        psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
-        
-        delta_rho_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
-          + phi_M * M_delta_phi
-          - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
-        delta_p_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)  
-          - phi_M * M_delta_phi
-          - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
-      }
-      
-      ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
-      
-      ppw->rho_plus_p_theta +=  (phi_M_prime*M_delta_phi_prime /SQR(pba->lrs_M_phi * _Mpc_times_eV)) // eV^4
-        *_eV4_to_rho_class // Mpc^-2, with the 8piG/3 factor
-        * k*k/a2;
-      
-      ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
-      
-      ppw->rho_plus_p_tot += 0; // The background has p=-rho
-      
+
       /* Fermion perturbation*/
       idx = ppw->pv->index_pt_psi0_lrs;
       if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
@@ -7958,6 +7931,40 @@ int perturb_total_stress_energy(
           *ppw->theta_lrs_F; // contribution to [(rho+p)theta]_matter
         rho_plus_p_m += (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
       }
+
+      /* Scalar field contribution. Must go after fermions [see below] */
+      if (ppt->has_lrs_pt == _TRUE_){
+	if (ppt->gauge == synchronous){
+	  delta_rho_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
+	    + phi_M * M_delta_phi; // eV^4
+	  delta_p_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)  
+	    - phi_M * M_delta_phi;
+	}
+	else{
+	  /* equation for psi */
+	  psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear; // Dimensionless
+        
+	  delta_rho_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
+	    + phi_M * M_delta_phi
+	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
+	  delta_p_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)  
+	    - phi_M * M_delta_phi
+	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
+	}
+
+      
+	ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
+
+	ppw->rho_plus_p_theta += phi_M_prime*M_delta_phi /SQR(pba->lrs_M_phi) // eV^2/Mpc
+	  * k*k/a2 // eV^2/Mpc^3
+	  / SQR(_Mpc_times_eV) // eV^4/Mpc
+	  *_eV4_to_rho_class; // Mpc^-3, with the 8piG/3 factor
+      
+	ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
+      }
+      ppw->rho_plus_p_tot += SQR(phi_M_prime/a2 / pba->lrs_M_phi) // eV^2/Mpc^2
+	/ SQR(_Mpc_times_eV) // eV^4
+	* _eV4_to_rho_class; // Mpc^-2, with the 8piG/3 factor
     }
     
     /* scalar field contribution.
@@ -7997,7 +8004,7 @@ int perturb_total_stress_energy(
       ppw->delta_p += delta_p_scf;
 
       ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_scf]+ppw->pvecback[pba->index_bg_p_scf];
-
+      
     }
 
     /* add your extra species here */
