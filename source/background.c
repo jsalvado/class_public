@@ -281,7 +281,9 @@ int background_functions(
      p_prime = a_prime_over_a * dp_dloga = a_prime_over_a * Sum [ (w_prime/a_prime_over_a -3(1+w)w)rho].
      Note: The scalar field contribution must be added in the end, as an exception!*/
   double dp_dloga;
-
+  /* lrs quantities */
+  double T_lrs, I1_lrs, I2_lrs;
+  
   /** - initialize local variables */
   a = pvecback_B[pba->index_bi_a];
   rho_tot = 0.;
@@ -442,7 +444,7 @@ int background_functions(
     double p_phi = -rho_phi;
 
     /* Fermion quantities */
-    double rho_F, p_F, pseudo_p_F, I1, I2;
+    double rho_F, p_F, pseudo_p_F;
     class_call(background_lrs_momenta(
 				       pba->q_lrs_bg,
 				       pba->w_lrs_bg,
@@ -454,8 +456,8 @@ int background_functions(
 				       &p_F,
 				       NULL,
 				       &pseudo_p_F,
-				       &I1,
-				       &I2),
+				       &I1_lrs,
+				       &I2_lrs),
 	       pba->error_message,
 	       pba->error_message);
     pvecback[pba->index_bg_rho_lrs_F] = rho_F;
@@ -463,22 +465,10 @@ int background_functions(
     
     pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;    /* Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935 */
 
-    //jordi
-    //ivan
-    double T = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
+    T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
 
-    pvecback[pba->index_bg_lrs_M_phi_prime] =
-      pba->lrs_g_over_M*pow(T,3)*I1/(1+SQR(pba->lrs_g_over_M)*SQR(T)*I2)* // Mphidot_over_H [eV^2]
-      pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
-      a_rel; //Mphiprime [eV^2/Mpc]
+    pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs; // Scalar thermal mass squared over vacuum mass squared
 
-    pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T) * I2; // Scalar thermal mass squared over vacuum mass squared
-
-    if (T < pba->lrs_m_F)
-      class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
-		 pba->error_message,
-		 "lrs: The effective scalar mass is smaller than 10*H for T_F/m0 = %e", T/pba->lrs_m_F);
-    
     /* Add up scalar and fermion */
     pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
     pvecback[pba->index_bg_p_lrs] = p_phi + p_F;
@@ -491,8 +481,8 @@ int background_functions(
 
     dp_dloga += pseudo_p_F - 5*p_F; // Fermion contribution
     dp_dloga += 1./3. * SQR(SQR(pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_)) * _J4_to_rho_class * // T^4, in rho_class units
-      SQR(pba->lrs_g_over_M * pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_ * I1) / // (g/M * T * I_1)^2, internally everything in eV
-      (1 + SQR(pba->lrs_g_over_M * pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_) * I2); // 1+(g/M * T)^2 * I_2, internally everything in eV
+      SQR(pba->lrs_g_over_M * T_lrs * I1_lrs) / // (g/M * T * I_1)^2, internally everything in eV
+      (1 + SQR(pba->lrs_g_over_M * T_lrs) * I2_lrs); // 1+(g/M * T)^2 * I_2, internally everything in eV
   }
 
   /* relativistic neutrinos (and all relativistic relics) */
@@ -542,6 +532,19 @@ int background_functions(
     pvecback[pba->index_bg_p_prime_scf] = pvecback[pba->index_bg_phi_prime_scf]*
       (-pvecback[pba->index_bg_phi_prime_scf]*pvecback[pba->index_bg_H]/a-2./3.*pvecback[pba->index_bg_dV_scf]);
     pvecback[pba->index_bg_p_tot_prime] += pvecback[pba->index_bg_p_prime_scf];
+  }
+
+  /* lrs-related quantities that depend on H */
+  if (pba->has_lrs ==_TRUE_){
+    pvecback[pba->index_bg_lrs_M_phi_prime] =
+      pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // Mphidot_over_H [eV^2]
+      pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
+      a_rel; //Mphiprime [eV^2/Mpc]
+
+    if (T_lrs < pba->lrs_m_F)
+      class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
+		 pba->error_message,
+		 "lrs: The effective scalar mass is smaller than 10*H for T_F/m0 = %e", T_lrs/pba->lrs_m_F);
   }
 
   /** - compute critical density */
