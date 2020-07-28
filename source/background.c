@@ -536,10 +536,13 @@ int background_functions(
 
   /* lrs-related quantities that depend on H */
   if (pba->has_lrs ==_TRUE_){
-    pvecback[pba->index_bg_lrs_M_phi_prime] =
-      pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // Mphidot_over_H [eV^2]
-      pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
-      a_rel; //Mphiprime [eV^2/Mpc]
+    if(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 1.) // This is to avoid the term hdot phidot oversourcing the perturbations. See e-mail on 28th of July
+      pvecback[pba->index_bg_lrs_M_phi_prime] = 0.;
+    else      
+      pvecback[pba->index_bg_lrs_M_phi_prime] =
+	pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // Mphidot_over_H [eV^2]
+	pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
+	a_rel; //Mphiprime [eV^2/Mpc]
 
     if (T_lrs < pba->lrs_m_F)
       class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
