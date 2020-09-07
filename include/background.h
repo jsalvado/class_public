@@ -327,6 +327,7 @@ struct background
   short has_idm_dr;    /**< presence of dark matter interacting with dark radiation? */
   short has_curvature; /**< presence of global spatial curvature? */
   short has_lrs;       /**< presence of long-range mediating scalar? */
+  short has_log10_lrs;   /**< lrs parameters set in log scale */
 
   //@}
 

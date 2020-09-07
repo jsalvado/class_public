@@ -1248,13 +1248,31 @@ int input_read_parameters(
   else if (pba->K < 0.) pba->sgnK = -1;
 
   /** - Long range interaction parameters */
+  class_read_string("log10_lrs",string1);
+  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
+    pba->has_log10_lrs = _TRUE_;
+  }else{
+    pba->has_log10_lrs = _FALSE_;
+  }
+  
+
+
+
+  if(pba->has_log10_lrs == _TRUE_){
+    double daux;
+    class_read_double("lrs_g_over_M",daux);
+    pba->lrs_g_over_M = pow(10.,daux);
+    class_read_double("lrs_M_phi",daux);
+    pba->lrs_M_phi = pow(10.,daux);
+  }else{
+    class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
+    class_read_double("lrs_M_phi", pba->lrs_M_phi);
+  }
   class_read_double("lrs_m_F",pba->lrs_m_F);
-  class_read_double("lrs_g_over_M",pba->lrs_g_over_M);
-  class_read_double("lrs_M_phi",pba->lrs_M_phi);
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
-
   class_read_string("longrangescalar",string1);
+
   if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
     pba->has_lrs = _TRUE_;
   }else{
@@ -1267,7 +1285,7 @@ int input_read_parameters(
   }else{
     ppt->has_lrs_pt = _FALSE_;
   }
-  
+
   
   // Tolerance
   if (ppt->gauge == synchronous)
