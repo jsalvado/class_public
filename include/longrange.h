@@ -38,6 +38,9 @@ extern "C" {
 
   // Returns the scalar field times its mass solving the equations of motion
   int getPhi_M(struct background * pba, double z, double *phi_M);
+
+  // Returns the scale factor at adiabatic instability onset
+  int instabilityOnset(struct background * pba, double * a_rel);
 #ifdef __cplusplus
 }
 #endif

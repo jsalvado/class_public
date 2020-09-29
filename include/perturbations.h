@@ -35,6 +35,7 @@ enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
 enum lrsfa_flags {lrsfa_off, lrsfa_on};
 enum lrsfo1_flags {lrsfo1_off, lrsfo1_on};
 enum lrsfo2_flags {lrsfo2_on, lrsfo2_off};
+enum lrsnug_flags {lrsnug_off, lrsnug_on};
 
 //@}
 
@@ -647,6 +648,7 @@ struct perturb_workspace
   int index_ap_lrsfa; /**< index for lrs fluid approximation */
   int index_ap_lrsfo1; /**< index for lrs fast oscillations 1*/
   int index_ap_lrsfo2; /**< index for lrs fast oscillations 2*/
+  int index_ap_lrsnug; /**< index for lrs nuggets*/
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */

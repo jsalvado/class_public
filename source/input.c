@@ -1286,6 +1286,13 @@ int input_read_parameters(
     ppt->has_lrs_pt = _FALSE_;
   }
 
+  class_read_string("longrangescalar_nuggets",string1);
+  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
+    pba->has_lrs_nuggets = _TRUE_;
+  }else{
+    pba->has_lrs_nuggets = _FALSE_;
+  }
+
   
   // Tolerance
   if (ppt->gauge == synchronous)

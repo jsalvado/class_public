@@ -2613,6 +2613,7 @@ int perturb_workspace_init(
     class_define_index(ppw->index_ap_lrsfa,pba->has_lrs,index_ap,1);
     class_define_index(ppw->index_ap_lrsfo1,ppt->has_lrs_pt,index_ap,1);
     class_define_index(ppw->index_ap_lrsfo2,ppt->has_lrs_pt,index_ap,1);
+    class_define_index(ppw->index_ap_lrsnug,pba->has_lrs_nuggets,index_ap,1);
     class_define_index(ppw->index_ap_tca_idm_dr,pba->has_idm_dr,index_ap,1);
     class_define_index(ppw->index_ap_rsa_idr,pba->has_idr,index_ap,1);
 
@@ -2643,11 +2644,16 @@ int perturb_workspace_init(
     if (pba->has_ncdm == _TRUE_) {
       ppw->approx[ppw->index_ap_ncdmfa]=(int)ncdmfa_off;
     }
-    if (pba->has_lrs == _TRUE_)
+    if (pba->has_lrs == _TRUE_){
       ppw->approx[ppw->index_ap_lrsfa]=(int)lrsfa_off;
-    if (ppt->has_lrs_pt == _TRUE_){
-      ppw->approx[ppw->index_ap_lrsfo1]=(int)lrsfo1_off;
-      ppw->approx[ppw->index_ap_lrsfo2]=(int)lrsfo2_off;
+
+      if (ppt->has_lrs_pt == _TRUE_){
+        ppw->approx[ppw->index_ap_lrsfo1]=(int)lrsfo1_off;
+        ppw->approx[ppw->index_ap_lrsfo2]=(int)lrsfo2_off;
+      }
+
+      if (pba->has_lrs_nuggets == _TRUE_)
+        ppw->approx[ppw->index_ap_lrsnug]=(int)lrsnug_off;
     }
   }
 
@@ -3614,15 +3620,23 @@ int perturb_find_approximation_switches(
                 (interval_approx[index_switch][ppw->index_ap_lrsfa]==(int)lrsfa_on)) {
               fprintf(stdout,"Mode k=%e: will switch on lrs fluid approximation at tau=%e\n",k,interval_limit[index_switch]); 
             }
-          }
-          if (ppt->has_lrs_pt == _TRUE_) {
-            if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_on) &&
-                (interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off && interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off)) {
-              fprintf(stdout,"Mode k=%e: will switch off lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
+          
+            if (ppt->has_lrs_pt == _TRUE_) {
+              if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_on) &&
+                  (interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off && interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_off)) {
+                fprintf(stdout,"Mode k=%e: will switch off lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
+              }
+	      if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_off && interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_off) &&
+                  (interval_approx[index_switch][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_on)) {
+                fprintf(stdout,"Mode k=%e: will switch on lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
+              }
             }
-	    if ((interval_approx[index_switch-1][ppw->index_ap_lrsfo1]==(int)lrsfo1_off && interval_approx[index_switch-1][ppw->index_ap_lrsfo2]==(int)lrsfo2_off) &&
-                (interval_approx[index_switch][ppw->index_ap_lrsfo1]==(int)lrsfo1_on || interval_approx[index_switch][ppw->index_ap_lrsfo2]==(int)lrsfo2_on)) {
-              fprintf(stdout,"Mode k=%e: will switch on lrs fast oscillation approximation at tau=%e\n",k,interval_limit[index_switch]);
+
+	    if (pba->has_lrs_nuggets == _TRUE_) {
+              if ((interval_approx[index_switch-1][ppw->index_ap_lrsnug]==(int)lrsnug_off) &&
+                  (interval_approx[index_switch][ppw->index_ap_lrsnug]==(int)lrsnug_on)) {
+                fprintf(stdout,"Mode k=%e: will switch on lrs nugget approximation at tau=%e\n",k,interval_limit[index_switch]); 
+              }
             }
           }
         }
@@ -3723,7 +3737,7 @@ int perturb_vector_init(
 
   int index_pt;
   int l;
-  int n_ncdm,index_q,ncdm_l_size,lrs_l_size;
+  int n_ncdm,index_q,ncdm_l_size;
   double rho_plus_p_ncdm,rho_plus_p_lrs,q,q2,epsilon,a,factor;
 
   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
@@ -3927,11 +3941,11 @@ int perturb_vector_init(
     if (pba->has_lrs == _TRUE_) {
       /* lrs field equation */
       if(ppt->has_lrs_pt == _TRUE_){
-        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off ) {
+        if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	   && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
 #ifdef JORDBG
           printf("index lrsptb: %d\n", index_pt);
 #endif
-
           class_define_index(ppv->index_pt_Mlrs,ppt->has_lrs_pt,index_pt,1);       /* M*delta_phi*/
           class_define_index(ppv->index_pt_Mlrs_prime,ppt->has_lrs_pt,index_pt,1); /* M*delta_phi'*/
 #ifdef JORDBG
@@ -3946,7 +3960,11 @@ int perturb_vector_init(
       ppv->index_pt_psi0_lrs = index_pt; /* density of ultra-relativistic neutrinos/relics */
       
       // Set value of ppv->l_max_lrs:
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_off){
+      if(pba->has_lrs_nuggets == _TRUE_ && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on){
+	// In the nugget approximation, hierarchy is cut at lmax = 1 and q dependence is integrated out
+	ppv->l_max_lrs = 1;
+	ppv->q_size_lrs = 1;
+      } else if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_off){
         /* reject inconsistent values of the number of mutipoles in ultra relativistic neutrino hierarchy */
         class_test(ppr->l_max_lrs < 4,
                    ppt->error_message,
@@ -4281,6 +4299,12 @@ int perturb_vector_init(
                    ppt->error_message,
                    "scalar initial conditions assume lrs fluid approximation turned off");
 
+	if (pba->has_lrs_nuggets == _TRUE_)
+	  class_test(ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on,
+		     ppt->error_message,
+		     "scalar initial conditions assume lrs nugget approximation turned off");
+	  
+
       }
 
       class_test(ppw->approx[ppw->index_ap_tca] == (int)tca_off,
@@ -4520,7 +4544,7 @@ int perturb_vector_init(
           index_pt = 0;
           for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
             for(l=0; l<=ppv->l_max_lrs;l++){
-              // This is correct with or without lrsfa, since ppv->lmax_lrs is set accordingly.
+              // This is correct with or without lrsfa/lrsnug, since ppv->lmax_lrs is set accordingly.
               ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                 ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
               index_pt++;
@@ -4528,7 +4552,8 @@ int perturb_vector_init(
           }
 
           if (ppt->has_lrs_pt == _TRUE_) 
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4614,7 +4639,8 @@ int perturb_vector_init(
           }
 
           if (ppt->has_lrs_pt == _TRUE_) 
-          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	     && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
             ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
             ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
           }
@@ -4734,7 +4760,7 @@ int perturb_vector_init(
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
-                /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+                /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
                    ppv->q_size_lrs is updated.*/
                 ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                   ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
@@ -4743,7 +4769,8 @@ int perturb_vector_init(
             }
 
             if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4848,7 +4875,7 @@ int perturb_vector_init(
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
-                /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+                /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
                    ppv->q_size_lrs is updated.*/
                 ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                   ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
@@ -4857,7 +4884,8 @@ int perturb_vector_init(
             }
           }
           if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -4977,7 +5005,7 @@ int perturb_vector_init(
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
-                /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+                /* This is correct with or withour lrsfa/lrsnug, since ppv->l_max_lrs and
                    ppv->q_size_lrs is updated.*/
                 ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                   ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
@@ -4985,7 +5013,8 @@ int perturb_vector_init(
               }
             }
             if (ppt->has_lrs_pt == _TRUE_)
-              if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+              if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+		 && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
                 ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
                 ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
               }
@@ -5144,7 +5173,7 @@ int perturb_vector_init(
           index_pt = 0;
           for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
             for(l=0; l<=ppv->l_max_lrs; l++){
-              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
+              /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
                  ppv->q_size_lrs is updated.*/
               ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                 ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
@@ -5152,7 +5181,8 @@ int perturb_vector_init(
             }
           }
           if (ppt->has_lrs_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off  && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+            if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off  && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
               ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
             }
@@ -5165,7 +5195,8 @@ int perturb_vector_init(
            approximation. Provide correct initial conditions to new set
            of variables */
         
-        if ((pa_old[ppw->index_ap_lrsfa] == (int)lrsfa_off) && (ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on)) {
+        if ((pa_old[ppw->index_ap_lrsfa] == (int)lrsfa_off) && (ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on)
+	    && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {  // Switch only if there are no nuggets
           
           if (ppt->perturbations_verbose>2)
             fprintf(stdout,"Mode k=%e: switch on lrs fluid approximation at tau=%e\n",k,tau);
@@ -5291,8 +5322,6 @@ int perturb_vector_init(
           a = ppw->pvecback[pba->index_bg_a];
           index_pt = ppw->pv->index_pt_psi0_lrs;
           
-          // We are in the fluid approximation, so lrs_l_size is always 3.
-          lrs_l_size = ppv->l_max_lrs+1;
           rho_plus_p_lrs = ppw->pvecback[pba->index_bg_rho_lrs_F]+
             ppw->pvecback[pba->index_bg_p_lrs_F];
           for(l=0; l<=2; l++){
@@ -5305,7 +5334,7 @@ int perturb_vector_init(
 	    if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
 	      M_delta_phi = ppw->pv->y[ppw->pv->index_pt_Mlrs];
 	    else
-	      M_delta_phi = ppw->M_delta_phi_lrsfo; // (see L4435)
+	      M_delta_phi = ppw->M_delta_phi_lrsfo; // (see L4465)
 	  }
 	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
 		
@@ -5335,417 +5364,598 @@ int perturb_vector_init(
           ppv->y[ppv->index_pt_psi0_lrs+2] *=2.0/3.0*factor/rho_plus_p_lrs;
           
         }
-      }
+      
 
-        /* -- case of switching on lrs fast oscillation
-           approximation. Provide correct initial conditions to new set
-           of variables */
-      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on)) {
+	/* -- case of switching on lrs fast oscillation
+	   approximation. Provide correct initial conditions to new set
+	   of variables */
+	if(ppt->has_lrs_pt==_TRUE_){
+	  if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on)
+	      && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {  // Switch only if there are no nuggets
           
-          if (ppt->perturbations_verbose>2)
-            fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
+	    if (ppt->perturbations_verbose>2)
+	      fprintf(stdout,"Mode k=%e: switch on lrs fast oscillation approximation at tau=%e\n",k,tau);
           
-          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+	    if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
             
-            ppv->y[ppv->index_pt_delta_g] =
-              ppw->pv->y[ppw->pv->index_pt_delta_g];
+	      ppv->y[ppv->index_pt_delta_g] =
+		ppw->pv->y[ppw->pv->index_pt_delta_g];
             
-            ppv->y[ppv->index_pt_theta_g] =
-              ppw->pv->y[ppw->pv->index_pt_theta_g];
-          }
+	      ppv->y[ppv->index_pt_theta_g] =
+		ppw->pv->y[ppw->pv->index_pt_theta_g];
+	    }
           
-          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+	    if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
             
-            ppv->y[ppv->index_pt_shear_g] =
-              ppw->pv->y[ppw->pv->index_pt_shear_g];
+	      ppv->y[ppv->index_pt_shear_g] =
+		ppw->pv->y[ppw->pv->index_pt_shear_g];
             
-            ppv->y[ppv->index_pt_l3_g] =
-              ppw->pv->y[ppw->pv->index_pt_l3_g];
+	      ppv->y[ppv->index_pt_l3_g] =
+		ppw->pv->y[ppw->pv->index_pt_l3_g];
             
-            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+	      for (l = 4; l <= ppw->pv->l_max_g; l++) {
               
-              ppv->y[ppv->index_pt_delta_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
-            }
+		ppv->y[ppv->index_pt_delta_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+	      }
             
-            ppv->y[ppv->index_pt_pol0_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+	      ppv->y[ppv->index_pt_pol0_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol0_g];
             
-            ppv->y[ppv->index_pt_pol1_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+	      ppv->y[ppv->index_pt_pol1_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol1_g];
             
-            ppv->y[ppv->index_pt_pol2_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+	      ppv->y[ppv->index_pt_pol2_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol2_g];
             
-            ppv->y[ppv->index_pt_pol3_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+	      ppv->y[ppv->index_pt_pol3_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol3_g];
             
-            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+	      for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
               
-              ppv->y[ppv->index_pt_pol0_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
-            }
+		ppv->y[ppv->index_pt_pol0_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+	      }
             
-          }
+	    }
             
-          if (pba->has_ur == _TRUE_) {
+	    if (pba->has_ur == _TRUE_) {
             
-            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+	      if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
               
               
-              ppv->y[ppv->index_pt_delta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+		ppv->y[ppv->index_pt_delta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_ur];
               
-              ppv->y[ppv->index_pt_theta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+		ppv->y[ppv->index_pt_theta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_ur];
               
-              ppv->y[ppv->index_pt_shear_ur] =
-                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+		ppv->y[ppv->index_pt_shear_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_shear_ur];
               
-              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+		if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
                 
-                ppv->y[ppv->index_pt_l3_ur] =
-                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+		  ppv->y[ppv->index_pt_l3_ur] =
+		    ppw->pv->y[ppw->pv->index_pt_l3_ur];
                 
-                for (l=4; l <= ppv->l_max_ur; l++)
-                  ppv->y[ppv->index_pt_delta_ur+l] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+		  for (l=4; l <= ppv->l_max_ur; l++)
+		    ppv->y[ppv->index_pt_delta_ur+l] =
+		      ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
                 
-              }
-            }
-          }
+		}
+	      }
+	    }
           
-          if (pba->has_idr == _TRUE_){
-            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+	    if (pba->has_idr == _TRUE_){
+	      if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
               
-              ppv->y[ppv->index_pt_delta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+		ppv->y[ppv->index_pt_delta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_idr];
               
-              ppv->y[ppv->index_pt_theta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+		ppv->y[ppv->index_pt_theta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_idr];
               
-              if (ppt->idr_nature == idr_free_streaming){
+		if (ppt->idr_nature == idr_free_streaming){
                 
-                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+		  if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
                   
-                  ppv->y[ppv->index_pt_shear_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+		    ppv->y[ppv->index_pt_shear_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_shear_idr];
                   
-                  ppv->y[ppv->index_pt_l3_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+		    ppv->y[ppv->index_pt_l3_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_l3_idr];
                   
-                  for (l=4; l <= ppv->l_max_idr; l++)
-                    ppv->y[ppv->index_pt_delta_idr+l] =
-                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
-                }
-              }
-            }
-          }
+		    for (l=4; l <= ppv->l_max_idr; l++)
+		      ppv->y[ppv->index_pt_delta_idr+l] =
+			ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+		  }
+		}
+	      }
+	    }
           
-          if (pba->has_ncdm == _TRUE_) {
-            index_pt = 0;
-            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
-              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
-                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
-                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
-                     ppv->q_size_ncdm is updated.*/
-                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
-                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
-                  index_pt++;
-                }
-              }
-            }
-          }
+	    if (pba->has_ncdm == _TRUE_) {
+	      index_pt = 0;
+	      for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+		for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+		  for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+		    /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+		       ppv->q_size_ncdm is updated.*/
+		    ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+		      ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+		    index_pt++;
+		  }
+		}
+	      }
+	    }
           
-          index_pt = 0;
-          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
-            for(l=0; l<=ppv->l_max_lrs; l++){
-              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
-                 ppv->q_size_lrs is updated.*/
-              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
-                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
-              index_pt++;
-            }
-          }
+	    index_pt = 0;
+	    for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+	      for(l=0; l<=ppv->l_max_lrs; l++){
+		/* This is correct even with or without lrsfa/lrsnug, since ppv->l_max_lrs and
+		   ppv->q_size_lrs is updated.*/
+		ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+		index_pt++;
+	      }
+	    }
+	  }
+	}
+
+	/* -- case of switching off lrs fast oscillation
+	   approximation. Provide correct initial conditions to new set
+	   of variables */
+	if(ppt->has_lrs_pt==_TRUE_){
+	  if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
+	      && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {  // Switch only if there are no nuggets
+          
+	    if (ppt->perturbations_verbose>2)
+	      fprintf(stdout,"Mode k=%e: switch off lrs fast oscillation approximation at tau=%e\n",k,tau);
+          
+	    if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+            
+	      ppv->y[ppv->index_pt_delta_g] =
+		ppw->pv->y[ppw->pv->index_pt_delta_g];
+            
+	      ppv->y[ppv->index_pt_theta_g] =
+		ppw->pv->y[ppw->pv->index_pt_theta_g];
+	    }
+          
+	    if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+            
+	      ppv->y[ppv->index_pt_shear_g] =
+		ppw->pv->y[ppw->pv->index_pt_shear_g];
+            
+	      ppv->y[ppv->index_pt_l3_g] =
+		ppw->pv->y[ppw->pv->index_pt_l3_g];
+            
+	      for (l = 4; l <= ppw->pv->l_max_g; l++) {
+              
+		ppv->y[ppv->index_pt_delta_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+	      }
+            
+	      ppv->y[ppv->index_pt_pol0_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol0_g];
+            
+	      ppv->y[ppv->index_pt_pol1_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol1_g];
+            
+	      ppv->y[ppv->index_pt_pol2_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol2_g];
+            
+	      ppv->y[ppv->index_pt_pol3_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol3_g];
+            
+	      for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+              
+		ppv->y[ppv->index_pt_pol0_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+	      }
+            
+	    }
+            
+	    if (pba->has_ur == _TRUE_) {
+            
+	      if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              
+		ppv->y[ppv->index_pt_delta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_ur];
+              
+		ppv->y[ppv->index_pt_theta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+		ppv->y[ppv->index_pt_shear_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_shear_ur];
+              
+		if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+                
+		  ppv->y[ppv->index_pt_l3_ur] =
+		    ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                
+		  for (l=4; l <= ppv->l_max_ur; l++)
+		    ppv->y[ppv->index_pt_delta_ur+l] =
+		      ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+                
+		}
+	      }
+	    }
+          
+	    if (pba->has_idr == _TRUE_){
+	      if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+              
+		ppv->y[ppv->index_pt_delta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_idr];
+              
+		ppv->y[ppv->index_pt_theta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_idr];
+              
+		if (ppt->idr_nature == idr_free_streaming){
+                
+		  if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+                  
+		    ppv->y[ppv->index_pt_shear_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_shear_idr];
+                  
+		    ppv->y[ppv->index_pt_l3_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_l3_idr];
+                  
+		    for (l=4; l <= ppv->l_max_idr; l++)
+		      ppv->y[ppv->index_pt_delta_idr+l] =
+			ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+		  }
+		}
+	      }
+	    }
+          
+	    if (pba->has_ncdm == _TRUE_) {
+	      index_pt = 0;
+	      for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+		for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+		  for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+		    /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+		       ppv->q_size_ncdm is updated.*/
+		    ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+		      ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+		    index_pt++;
+		  }
+		}
+	      }
+	    }
+          
+	    index_pt = 0;
+	    for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+	      for(l=0; l<=ppv->l_max_lrs; l++){
+		/* This is correct even with or without lrsfa/lrsnug, since ppv->l_max_lrs and
+		   ppv->q_size_lrs is updated.*/
+		ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+		index_pt++;
+	      }
+	    }
+          
+	    ppv->y[ppv->index_pt_Mlrs] = ppw->M_delta_phi_lrsfo; // (see L4465)
+	    ppv->y[ppv->index_pt_Mlrs_prime] = 0; // (see L4465)
+	  }
+	}
+
+	/* -- case of switching one of the flags
+	   without changing the approximation scheme. This happens if
+	   1)lrsfo1 switches from off to on while lrsfo2 is on
+	   2)lrsfo2 switches from on to off while lrsfo1 is on
+	   3)lrsfox switches while lrsnug is on
+	   4)lrsfa switches from off to on while lrsnug is on
+	   */
+	if( (ppt->has_lrs_pt==_TRUE_ && (
+					 ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on) && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) // Case 1
+					 ||
+					 ((pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on) // Case 2
+					 ||
+					 ((pba->has_lrs_nuggets == _TRUE_ && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on) && (
+																      ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on)) // Case 3
+																      ||
+																      ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)) // Case 3
+																      )
+					  )
+					 )
+	     )
+	    || ((pba->has_lrs_nuggets == _TRUE_ && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on) && (pa_old[ppw->index_ap_lrsfa] == (int)lrsfa_off && ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on))){ // Case 4
+          
+	    if (ppt->perturbations_verbose>2)
+	      fprintf(stdout,"Mode k=%e: change one of the lrs flags without switching approximation scheme at tau=%e\n",k,tau);
+          
+	    if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+            
+	      ppv->y[ppv->index_pt_delta_g] =
+		ppw->pv->y[ppw->pv->index_pt_delta_g];
+            
+	      ppv->y[ppv->index_pt_theta_g] =
+		ppw->pv->y[ppw->pv->index_pt_theta_g];
+	    }
+          
+	    if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+            
+	      ppv->y[ppv->index_pt_shear_g] =
+		ppw->pv->y[ppw->pv->index_pt_shear_g];
+            
+	      ppv->y[ppv->index_pt_l3_g] =
+		ppw->pv->y[ppw->pv->index_pt_l3_g];
+            
+	      for (l = 4; l <= ppw->pv->l_max_g; l++) {
+              
+		ppv->y[ppv->index_pt_delta_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+	      }
+            
+	      ppv->y[ppv->index_pt_pol0_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol0_g];
+            
+	      ppv->y[ppv->index_pt_pol1_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol1_g];
+            
+	      ppv->y[ppv->index_pt_pol2_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol2_g];
+            
+	      ppv->y[ppv->index_pt_pol3_g] =
+		ppw->pv->y[ppw->pv->index_pt_pol3_g];
+            
+	      for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+              
+		ppv->y[ppv->index_pt_pol0_g+l] =
+		  ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+	      }
+            
+	    }
+            
+	    if (pba->has_ur == _TRUE_) {
+            
+	      if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              
+		ppv->y[ppv->index_pt_delta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_ur];
+              
+		ppv->y[ppv->index_pt_theta_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+		ppv->y[ppv->index_pt_shear_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_shear_ur];
+              
+		if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+                
+		  ppv->y[ppv->index_pt_l3_ur] =
+		    ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                
+		  for (l=4; l <= ppv->l_max_ur; l++)
+		    ppv->y[ppv->index_pt_delta_ur+l] =
+		      ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+                
+		}
+	      }
+	    }
+          
+	    if (pba->has_idr == _TRUE_){
+	      if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+              
+		ppv->y[ppv->index_pt_delta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_delta_idr];
+              
+		ppv->y[ppv->index_pt_theta_idr] =
+		  ppw->pv->y[ppw->pv->index_pt_theta_idr];
+              
+		if (ppt->idr_nature == idr_free_streaming){
+                
+		  if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+                  
+		    ppv->y[ppv->index_pt_shear_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_shear_idr];
+                  
+		    ppv->y[ppv->index_pt_l3_idr] =
+		      ppw->pv->y[ppw->pv->index_pt_l3_idr];
+                  
+		    for (l=4; l <= ppv->l_max_idr; l++)
+		      ppv->y[ppv->index_pt_delta_idr+l] =
+			ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+		  }
+		}
+	      }
+	    }
+          
+	    if (pba->has_ncdm == _TRUE_) {
+	      index_pt = 0;
+	      for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+		for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+		  for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+		    /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+		       ppv->q_size_ncdm is updated.*/
+		    ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+		      ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+		    index_pt++;
+		  }
+		}
+	      }
+	    }
+          
+	    index_pt = 0;
+	    for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+	      for(l=0; l<=ppv->l_max_lrs; l++){
+		/* This is correct even with or without lrsfa/lrsnug, since ppv->l_max_lrs and
+		   ppv->q_size_lrs is updated.*/
+		ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+		index_pt++;
+	      }
+	    }
+          
+	}
+
+	/* -- case of switching on nugget approximation*/
+	if (pba->has_lrs_nuggets == _TRUE_ && pa_old[ppw->index_ap_lrsnug] == (int)lrsnug_off && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on) {
+          
+	  if (ppt->perturbations_verbose>2)
+	    fprintf(stdout,"Mode k=%e: switch on lrs nugget approximation at tau=%e\n",k,tau);
+          
+	  if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+            
+	    ppv->y[ppv->index_pt_delta_g] =
+	      ppw->pv->y[ppw->pv->index_pt_delta_g];
+            
+	    ppv->y[ppv->index_pt_theta_g] =
+	      ppw->pv->y[ppw->pv->index_pt_theta_g];
+	  }
+          
+	  if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+            
+	    ppv->y[ppv->index_pt_shear_g] =
+	      ppw->pv->y[ppw->pv->index_pt_shear_g];
+            
+	    ppv->y[ppv->index_pt_l3_g] =
+	      ppw->pv->y[ppw->pv->index_pt_l3_g];
+            
+	    for (l = 4; l <= ppw->pv->l_max_g; l++) {
+              
+	      ppv->y[ppv->index_pt_delta_g+l] =
+		ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+	    }
+            
+	    ppv->y[ppv->index_pt_pol0_g] =
+	      ppw->pv->y[ppw->pv->index_pt_pol0_g];
+            
+	    ppv->y[ppv->index_pt_pol1_g] =
+	      ppw->pv->y[ppw->pv->index_pt_pol1_g];
+            
+	    ppv->y[ppv->index_pt_pol2_g] =
+	      ppw->pv->y[ppw->pv->index_pt_pol2_g];
+            
+	    ppv->y[ppv->index_pt_pol3_g] =
+	      ppw->pv->y[ppw->pv->index_pt_pol3_g];
+            
+	    for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+              
+	      ppv->y[ppv->index_pt_pol0_g+l] =
+		ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+	    }
+            
+	  }
+          
+	  if (pba->has_ur == _TRUE_) {
+            
+	    if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+              
+              
+	      ppv->y[ppv->index_pt_delta_ur] =
+		ppw->pv->y[ppw->pv->index_pt_delta_ur];
+              
+	      ppv->y[ppv->index_pt_theta_ur] =
+		ppw->pv->y[ppw->pv->index_pt_theta_ur];
+              
+	      ppv->y[ppv->index_pt_shear_ur] =
+		ppw->pv->y[ppw->pv->index_pt_shear_ur];
+              
+	      if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+                
+		ppv->y[ppv->index_pt_l3_ur] =
+		  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+                
+		for (l=4; l <= ppv->l_max_ur; l++)
+		  ppv->y[ppv->index_pt_delta_ur+l] =
+		    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+                
+	      }
+	    }
+	  }
+          
+	  if (pba->has_idr == _TRUE_){
+	    if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
+              
+	      ppv->y[ppv->index_pt_delta_idr] =
+		ppw->pv->y[ppw->pv->index_pt_delta_idr];
+              
+	      ppv->y[ppv->index_pt_theta_idr] =
+		ppw->pv->y[ppw->pv->index_pt_theta_idr];
+              
+	      if (ppt->idr_nature == idr_free_streaming){
+                
+		if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+                  
+		  ppv->y[ppv->index_pt_shear_idr] =
+		    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+                  
+		  ppv->y[ppv->index_pt_l3_idr] =
+		    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+                  
+		  for (l=4; l <= ppv->l_max_idr; l++)
+		    ppv->y[ppv->index_pt_delta_idr+l] =
+		      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+		}
+	      }
+	    }
+	  }
+          
+	  if (pba->has_ncdm == _TRUE_) {
+	    index_pt = 0;
+	    for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+	      for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+		for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+		  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+		     ppv->q_size_ncdm is updated.*/
+		  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+		    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+		  index_pt++;
+		}
+	      }
+	    }
+	  }
+
+	  if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_off){
+	    a = ppw->pvecback[pba->index_bg_a];
+	    index_pt = ppw->pv->index_pt_psi0_lrs;
+          
+	    rho_plus_p_lrs = ppw->pvecback[pba->index_bg_rho_lrs_F]+
+	      ppw->pvecback[pba->index_bg_p_lrs_F];
+	    for(l=0; l<=1; l++){
+	      ppv->y[ppv->index_pt_psi0_lrs+l] = 0.0;
+	    }
+	  
+	    factor = pba->factor_lrs*pow(pba->a_today/a,4);
+	    double M_delta_phi=0; // eV^2
+	    if (ppt->has_lrs_pt == _TRUE_){
+	      if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
+		M_delta_phi = ppw->pv->y[ppw->pv->index_pt_Mlrs];
+	      else
+		M_delta_phi = ppw->M_delta_phi_lrsfo; // (see L4465)
+	    }
+	    double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+		
+	    for(index_q=0; index_q < ppw->pv->q_size_lrs; index_q++){
+	      // Integrate over distributions:
+	      q = pba->q_lrs[index_q];
+	      q2 = q*q;
+	      epsilon = sqrt(q2+a*a*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]);
+	      ppv->y[ppv->index_pt_psi0_lrs] +=
+		pba->w_lrs[index_q]*q2*epsilon* (ppw->pv->y[index_pt]
+						 + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
+	      // The extra term is dimensionless, so we are safe
+
+	      ppv->y[ppv->index_pt_psi0_lrs+1] +=
+		pba->w_lrs[index_q]*q2*q*
+		ppw->pv->y[index_pt+1];
+            
+	      //Jump to next momentum bin in ppw->pv->y:
+	      index_pt += (ppw->pv->l_max_lrs+1);
+	    }
+	    ppv->y[ppv->index_pt_psi0_lrs] *=factor/ppw->pvecback[pba->index_bg_rho_lrs_F];
+	    ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor/rho_plus_p_lrs;
+          } else{
+	    ppv->y[ppv->index_pt_psi0_lrs + 0] =
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 0];
+	    ppv->y[ppv->index_pt_psi0_lrs + 1] =
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 1];
+	  }
 	}
       }
-
-        /* -- case of switching off lrs fast oscillation
-           approximation. Provide correct initial conditions to new set
-           of variables */
-      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if ((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_on || pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) && (ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)) {
-          
-          if (ppt->perturbations_verbose>2)
-            fprintf(stdout,"Mode k=%e: switch off lrs fast oscillation approximation at tau=%e\n",k,tau);
-          
-          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
-            
-            ppv->y[ppv->index_pt_delta_g] =
-              ppw->pv->y[ppw->pv->index_pt_delta_g];
-            
-            ppv->y[ppv->index_pt_theta_g] =
-              ppw->pv->y[ppw->pv->index_pt_theta_g];
-          }
-          
-          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
-            
-            ppv->y[ppv->index_pt_shear_g] =
-              ppw->pv->y[ppw->pv->index_pt_shear_g];
-            
-            ppv->y[ppv->index_pt_l3_g] =
-              ppw->pv->y[ppw->pv->index_pt_l3_g];
-            
-            for (l = 4; l <= ppw->pv->l_max_g; l++) {
-              
-              ppv->y[ppv->index_pt_delta_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
-            }
-            
-            ppv->y[ppv->index_pt_pol0_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol0_g];
-            
-            ppv->y[ppv->index_pt_pol1_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol1_g];
-            
-            ppv->y[ppv->index_pt_pol2_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol2_g];
-            
-            ppv->y[ppv->index_pt_pol3_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol3_g];
-            
-            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
-              
-              ppv->y[ppv->index_pt_pol0_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
-            }
-            
-          }
-            
-          if (pba->has_ur == _TRUE_) {
-            
-            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
-              
-              
-              ppv->y[ppv->index_pt_delta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_delta_ur];
-              
-              ppv->y[ppv->index_pt_theta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_theta_ur];
-              
-              ppv->y[ppv->index_pt_shear_ur] =
-                ppw->pv->y[ppw->pv->index_pt_shear_ur];
-              
-              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
-                
-                ppv->y[ppv->index_pt_l3_ur] =
-                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
-                
-                for (l=4; l <= ppv->l_max_ur; l++)
-                  ppv->y[ppv->index_pt_delta_ur+l] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
-                
-              }
-            }
-          }
-          
-          if (pba->has_idr == _TRUE_){
-            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
-              
-              ppv->y[ppv->index_pt_delta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_delta_idr];
-              
-              ppv->y[ppv->index_pt_theta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_theta_idr];
-              
-              if (ppt->idr_nature == idr_free_streaming){
-                
-                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
-                  
-                  ppv->y[ppv->index_pt_shear_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
-                  
-                  ppv->y[ppv->index_pt_l3_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
-                  
-                  for (l=4; l <= ppv->l_max_idr; l++)
-                    ppv->y[ppv->index_pt_delta_idr+l] =
-                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
-                }
-              }
-            }
-          }
-          
-          if (pba->has_ncdm == _TRUE_) {
-            index_pt = 0;
-            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
-              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
-                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
-                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
-                     ppv->q_size_ncdm is updated.*/
-                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
-                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
-                  index_pt++;
-                }
-              }
-            }
-          }
-          
-          index_pt = 0;
-          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
-            for(l=0; l<=ppv->l_max_lrs; l++){
-              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
-                 ppv->q_size_lrs is updated.*/
-              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
-                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
-              index_pt++;
-            }
-          }
-          
-	  ppv->y[ppv->index_pt_Mlrs] = ppw->M_delta_phi_lrsfo; // (see L4435)
-	  ppv->y[ppv->index_pt_Mlrs_prime] = 0; // (see L4435)
-	}
-      }
-
-      /* -- case of switching one of the fast oscillation flags
-	 without changing the approximation scheme
-	 This happens if lrsfo1 switches from off to on while lrsfo2 is on
-	           or if lrsfo2 switches from on to off while lrsfo1 is on*/
-      if((pba->has_lrs==_TRUE_) && (ppt->has_lrs_pt==_TRUE_)){
-        if (((pa_old[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on) && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_on) ||
-	    ((pa_old[ppw->index_ap_lrsfo2] == (int)lrsfo2_on && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) && ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_on)) {
-          
-          if (ppt->perturbations_verbose>2)
-            fprintf(stdout,"Mode k=%e: change one of the fast oscillation flags without switching approximation scheme at tau=%e\n",k,tau);
-          
-          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
-            
-            ppv->y[ppv->index_pt_delta_g] =
-              ppw->pv->y[ppw->pv->index_pt_delta_g];
-            
-            ppv->y[ppv->index_pt_theta_g] =
-              ppw->pv->y[ppw->pv->index_pt_theta_g];
-          }
-          
-          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
-            
-            ppv->y[ppv->index_pt_shear_g] =
-              ppw->pv->y[ppw->pv->index_pt_shear_g];
-            
-            ppv->y[ppv->index_pt_l3_g] =
-              ppw->pv->y[ppw->pv->index_pt_l3_g];
-            
-            for (l = 4; l <= ppw->pv->l_max_g; l++) {
-              
-              ppv->y[ppv->index_pt_delta_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
-            }
-            
-            ppv->y[ppv->index_pt_pol0_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol0_g];
-            
-            ppv->y[ppv->index_pt_pol1_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol1_g];
-            
-            ppv->y[ppv->index_pt_pol2_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol2_g];
-            
-            ppv->y[ppv->index_pt_pol3_g] =
-              ppw->pv->y[ppw->pv->index_pt_pol3_g];
-            
-            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
-              
-              ppv->y[ppv->index_pt_pol0_g+l] =
-                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
-            }
-            
-          }
-            
-          if (pba->has_ur == _TRUE_) {
-            
-            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
-              
-              
-              ppv->y[ppv->index_pt_delta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_delta_ur];
-              
-              ppv->y[ppv->index_pt_theta_ur] =
-                ppw->pv->y[ppw->pv->index_pt_theta_ur];
-              
-              ppv->y[ppv->index_pt_shear_ur] =
-                ppw->pv->y[ppw->pv->index_pt_shear_ur];
-              
-              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
-                
-                ppv->y[ppv->index_pt_l3_ur] =
-                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
-                
-                for (l=4; l <= ppv->l_max_ur; l++)
-                  ppv->y[ppv->index_pt_delta_ur+l] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
-                
-              }
-            }
-          }
-          
-          if (pba->has_idr == _TRUE_){
-            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
-              
-              ppv->y[ppv->index_pt_delta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_delta_idr];
-              
-              ppv->y[ppv->index_pt_theta_idr] =
-                ppw->pv->y[ppw->pv->index_pt_theta_idr];
-              
-              if (ppt->idr_nature == idr_free_streaming){
-                
-                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
-                  
-                  ppv->y[ppv->index_pt_shear_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
-                  
-                  ppv->y[ppv->index_pt_l3_idr] =
-                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
-                  
-                  for (l=4; l <= ppv->l_max_idr; l++)
-                    ppv->y[ppv->index_pt_delta_idr+l] =
-                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
-                }
-              }
-            }
-          }
-          
-          if (pba->has_ncdm == _TRUE_) {
-            index_pt = 0;
-            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
-              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
-                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
-                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
-                     ppv->q_size_ncdm is updated.*/
-                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
-                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
-                  index_pt++;
-                }
-              }
-            }
-          }
-          
-          index_pt = 0;
-          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
-            for(l=0; l<=ppv->l_max_lrs; l++){
-              /* This is correct even when lrsfa == off, since ppv->l_max_lrs and
-                 ppv->q_size_lrs is updated.*/
-              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
-                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
-              index_pt++;
-            }
-          }
-          
-	}
-      }
+      
     }
-  
 
     /** - --> (b) for the vector mode */
 
@@ -5877,7 +6087,7 @@ int perturb_vector_init(
         index_pt = 0;
         for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
           for(l=0; l<=ppv->l_max_lrs;l++){
-            // This is correct with or without lrsfa, since ppv->lmax_lrs is set accordingly.
+            // This is correct with or without lrsfa/lrsnug, since ppv->lmax_lrs is set accordingly.
             ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
               ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
             index_pt++;
@@ -5885,7 +6095,8 @@ int perturb_vector_init(
         }
 
         if(ppt->has_lrs_pt ==_TRUE_)
-          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off) {
+          if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off
+	     && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
             ppv->y[ppv->index_pt_Mlrs] = ppw->pv->y[ppw->pv->index_pt_Mlrs];
             ppv->y[ppv->index_pt_Mlrs_prime] = ppw->pv->y[ppw->pv->index_pt_Mlrs_prime];
           }
@@ -6930,23 +7141,9 @@ int perturb_approximations(
         ppw->approx[ppw->index_ap_ncdmfa] = (int)ncdmfa_off;
       }
     }
-
-    if (ppt->has_lrs_pt == _TRUE_) {
-      if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)/(SQR(k/ppw->pvecback[pba->index_bg_a])) >
-	   SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
-        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_on;
-      }else{
-        ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_off;
-      }
-      if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]/
-	   (SQR(k/ppw->pvecback[pba->index_bg_a])) >  SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
-        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_on;
-      }else{
-        ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_off;
-      }
-    }
       
     if (pba->has_lrs == _TRUE_) {
+
       if ((tau/tau_k > ppr->lrs_fluid_trigger_tau_over_tau_k) &&
           (ppr->lrs_fluid_approximation != lrsfa_none)) {
         
@@ -6954,6 +7151,29 @@ int perturb_approximations(
       }
       else {
         ppw->approx[ppw->index_ap_lrsfa] = (int)lrsfa_off;
+      }
+    
+      if (ppt->has_lrs_pt == _TRUE_) {
+        if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)/(SQR(k/ppw->pvecback[pba->index_bg_a])) >
+	     SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
+          ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_on;
+        }else{
+          ppw->approx[ppw->index_ap_lrsfo1] = (int)lrsfo1_off;
+        }
+	
+        if ( SQR(pba->lrs_M_phi * _Mpc_times_eV)*ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]/
+	     (SQR(k/ppw->pvecback[pba->index_bg_a])) >  SQR(ppr->lrs_fastosc_trigger_M_over_kH)){
+          ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_on;
+        }else{
+          ppw->approx[ppw->index_ap_lrsfo2] = (int)lrsfo2_off;
+        }
+      }
+
+      if (pba->has_lrs_nuggets == _TRUE_) {
+        if (ppw->pvecback[pba->index_bg_lrs_a_over_aunstable] > 1)
+	  ppw->approx[ppw->index_ap_lrsnug] = (int)lrsnug_on;
+        else
+  	ppw->approx[ppw->index_ap_lrsnug] = (int)lrsnug_off;
       }
     }
   }
@@ -7805,7 +8025,8 @@ int perturb_total_stress_energy(
       double M_delta_phi=0;
       double M_delta_phi_prime=0;
 
-      if (ppt->has_lrs_pt == _TRUE_){
+      if (ppt->has_lrs_pt == _TRUE_
+	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)){
         if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
           M_delta_phi=y[ppw->pv->index_pt_Mlrs];
           M_delta_phi_prime=y[ppw->pv->index_pt_Mlrs_prime];
@@ -7843,85 +8064,109 @@ int perturb_total_stress_energy(
 
       /* Fermion perturbation*/
       idx = ppw->pv->index_pt_psi0_lrs;
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
-        // The perturbations are evolved integrated:
-        rho_lrs_bg = ppw->pvecback[pba->index_bg_rho_lrs_F];
-        p_lrs_bg = ppw->pvecback[pba->index_bg_p_lrs_F];
-        pseudo_p_lrs = ppw->pvecback[pba->index_bg_pseudo_p_lrs_F];
+      if(pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off){
+	if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
+	  // The perturbations are evolved integrated:
+	  rho_lrs_bg = ppw->pvecback[pba->index_bg_rho_lrs_F];
+	  p_lrs_bg = ppw->pvecback[pba->index_bg_p_lrs_F];
+	  pseudo_p_lrs = ppw->pvecback[pba->index_bg_pseudo_p_lrs_F];
         
-        rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
-        w_lrs = p_lrs_bg/rho_lrs_bg;
-        cg2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
-			   1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]) /
-	  (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
-        if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
-          ppw->theta_lrs_F = y[idx+1];
-          ppw->shear_lrs_F = y[idx+2];
-        }
+	  rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
+	  w_lrs = p_lrs_bg/rho_lrs_bg;
+	  cg2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
+			     1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]) /
+	    (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
+	  if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+	    ppw->theta_lrs_F = y[idx+1];
+	    ppw->shear_lrs_F = y[idx+2];
+	  }
 
-        // Fermion density and pressure
-        ppw->delta_lrs_F = y[idx];
-        ppw->delta_p_lrs_F = cg2_lrs*rho_lrs_bg*y[idx];
+	  // Fermion density and pressure
+	  ppw->delta_lrs_F = y[idx];
+	  ppw->delta_p_lrs_F = cg2_lrs*rho_lrs_bg*y[idx];
         
-        ppw->delta_rho += rho_lrs_bg*y[idx];
-        ppw->rho_plus_p_theta += rho_plus_p_lrs*y[idx+1];
-        ppw->rho_plus_p_shear += rho_plus_p_lrs*y[idx+2];
-        ppw->delta_p += cg2_lrs*rho_lrs_bg*y[idx];
+	  ppw->delta_rho += rho_lrs_bg*y[idx];
+	  ppw->rho_plus_p_theta += rho_plus_p_lrs*y[idx+1];
+	  ppw->rho_plus_p_shear += rho_plus_p_lrs*y[idx+2];
+	  ppw->delta_p += cg2_lrs*rho_lrs_bg*y[idx];
         
-        ppw->rho_plus_p_tot += rho_plus_p_lrs;
+	  ppw->rho_plus_p_tot += rho_plus_p_lrs;
         
-        idx += ppw->pv->l_max_lrs+1;
-      }
-      else{
-        // We must integrate to find perturbations:
-        rho_delta_lrs = 0.0;
-        rho_plus_p_theta_lrs = 0.0;
-        rho_plus_p_shear_lrs = 0.0;
-        delta_p_lrs = 0.0;
-        factor = pba->factor_lrs*pow(pba->a_today/a,4);
+	  idx += ppw->pv->l_max_lrs+1;
+	}
+	else{
+	  // We must integrate to find perturbations:
+	  rho_delta_lrs = 0.0;
+	  rho_plus_p_theta_lrs = 0.0;
+	  rho_plus_p_shear_lrs = 0.0;
+	  delta_p_lrs = 0.0;
+	  factor = pba->factor_lrs*pow(pba->a_today/a,4);
 
-        for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
+	  for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
 
-          q = pba->q_lrs[index_q];
-          q2 = q*q;
-          epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
+	    q = pba->q_lrs[index_q];
+	    q2 = q*q;
+	    epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 
-          // ivan
-          rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
-							   + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
-          // The extra term is dimensionless, so we are safe
-          rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
-          rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
-          delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
-                                                            - a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
-          // The extra term is dimensionless, so we are safe
+	    // ivan
+	    rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
+							     + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
+	    // The extra term is dimensionless, so we are safe
+	    rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
+	    rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
+	    delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
+							      - a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
+	    // The extra term is dimensionless, so we are safe
 
-          //Jump to next momentum bin:
-          idx+=(ppw->pv->l_max_lrs+1);
-        }
+	    //Jump to next momentum bin:
+	    idx+=(ppw->pv->l_max_lrs+1);
+	  }
 
-        rho_delta_lrs *= factor;
-        rho_plus_p_theta_lrs *= k*factor;
-        rho_plus_p_shear_lrs *= 2.0/3.0*factor;
-        delta_p_lrs *= factor/3.;
+	  rho_delta_lrs *= factor;
+	  rho_plus_p_theta_lrs *= k*factor;
+	  rho_plus_p_shear_lrs *= 2.0/3.0*factor;
+	  delta_p_lrs *= factor/3.;
 
-        if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
-          ppw->theta_lrs_F = rho_plus_p_theta_lrs/
-            (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
-          ppw->shear_lrs_F = rho_plus_p_shear_lrs/
-            (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
-        }
+	  if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+	    ppw->theta_lrs_F = rho_plus_p_theta_lrs/
+	      (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
+	    ppw->shear_lrs_F = rho_plus_p_shear_lrs/
+	      (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
+	  }
         
-        ppw->delta_lrs_F = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
-        ppw->delta_p_lrs_F = delta_p_lrs;
+	  ppw->delta_lrs_F = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
+	  ppw->delta_p_lrs_F = delta_p_lrs;
         
-        ppw->delta_rho += rho_delta_lrs;
-        ppw->rho_plus_p_theta += rho_plus_p_theta_lrs;
-        ppw->rho_plus_p_shear += rho_plus_p_shear_lrs;
-        ppw->delta_p += delta_p_lrs;
+	  ppw->delta_rho += rho_delta_lrs;
+	  ppw->rho_plus_p_theta += rho_plus_p_theta_lrs;
+	  ppw->rho_plus_p_shear += rho_plus_p_shear_lrs;
+	  ppw->delta_p += delta_p_lrs;
 
-        ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F];
-      }
+	  ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F];
+	}
+      } else{
+	// Nugget approximation: the perturbations are evolved integrated:
+	rho_lrs_bg = ppw->pvecback[pba->index_bg_rho_lrs_F];
+	p_lrs_bg = ppw->pvecback[pba->index_bg_p_lrs_F];
+        
+	rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
+	if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+	  ppw->theta_lrs_F = y[idx+1];
+	  ppw->shear_lrs_F = 0.;
+	}
+
+	// Fermion density and pressure
+	ppw->delta_lrs_F = y[idx];
+	ppw->delta_p_lrs_F = 0.;
+        
+	ppw->delta_rho += rho_lrs_bg*y[idx];
+	ppw->rho_plus_p_theta += rho_plus_p_lrs*y[idx+1];
+	ppw->delta_p += 0;
+        
+	ppw->rho_plus_p_tot += rho_plus_p_lrs;
+        
+	idx += ppw->pv->l_max_lrs+1;
+      }      
       if (ppt->has_source_delta_m == _TRUE_) {
         delta_rho_m += ppw->pvecback[pba->index_bg_rho_lrs_F]*ppw->delta_lrs_F; // contribution to delta rho_matter
         rho_m += ppw->pvecback[pba->index_bg_rho_lrs_F];
@@ -7933,7 +8178,8 @@ int perturb_total_stress_energy(
       }
 
       /* Scalar field contribution. Must go after fermions [see below] */
-      if (ppt->has_lrs_pt == _TRUE_){
+      if (ppt->has_lrs_pt == _TRUE_
+	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)){
 	if (ppt->gauge == synchronous){
 	  delta_rho_scf = 1./a2*phi_M_prime*M_delta_phi_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
 	    + phi_M * M_delta_phi; // eV^4
@@ -8231,7 +8477,7 @@ int perturb_total_stress_energy(
     }
 
     /** - --> lrs contribution to gravitational wave source: */
-    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations, or nuggets
     if (ppt->evolve_tensor_lrs == _TRUE_){
 
       idx = ppw->pv->index_pt_psi0_lrs;
@@ -9213,61 +9459,76 @@ int perturb_print_variables(double tau,
       /** - --> Get delta, deltaP/rho, theta, shear and store in array */
       idx = ppw->pv->index_pt_psi0_lrs;
 
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
-        // The perturbations are evolved integrated:
-        rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F];
-        p_lrs_bg = pvecback[pba->index_bg_p_lrs_F];
-        pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
-        w_lrs = p_lrs_bg/rho_lrs_bg;
+      if(pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off){
+	if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
+	  // The perturbations are evolved integrated:
+	  rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F];
+	  p_lrs_bg = pvecback[pba->index_bg_p_lrs_F];
+	  pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
+	  w_lrs = p_lrs_bg/rho_lrs_bg;
 
-        delta_lrs = y[idx];
-        theta_lrs = y[idx+1];
-        shear_lrs = y[idx+2];
-        //This is the adiabatic sound speed:
-        delta_p_over_delta_rho_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
-					      1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]) /
-	  (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
-        idx += ppw->pv->l_max_lrs+1;
-      }
-      else{
-        // We must integrate to find perturbations:
-        rho_delta_lrs = 0.0;
-        rho_plus_p_theta_lrs = 0.0;
-        rho_plus_p_shear_lrs = 0.0;
-        delta_p_lrs = 0.0;
-        factor = pba->factor_lrs*pow(pba->a_today/a,4);
+	  delta_lrs = y[idx];
+	  theta_lrs = y[idx+1];
+	  shear_lrs = y[idx+2];
+	  //This is the adiabatic sound speed:
+	  delta_p_over_delta_rho_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
+						1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_lrs_MTsq_over_Msq]) /
+	    (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
+	  idx += ppw->pv->l_max_lrs+1;
+	}
+	else{
+	  // We must integrate to find perturbations:
+	  rho_delta_lrs = 0.0;
+	  rho_plus_p_theta_lrs = 0.0;
+	  rho_plus_p_shear_lrs = 0.0;
+	  delta_p_lrs = 0.0;
+	  factor = pba->factor_lrs*pow(pba->a_today/a,4);
         
-        for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
+	  for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
 
-          q = pba->q_lrs[index_q];
-          q2 = q*q;
-          epsilon = sqrt(q2+pvecback[pba->index_bg_mT_over_T0_lrs]*pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
+	    q = pba->q_lrs[index_q];
+	    q2 = q*q;
+	    epsilon = sqrt(q2+pvecback[pba->index_bg_mT_over_T0_lrs]*pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 
-          rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
-							   + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
-          // The extra term is dimensionless, so we are safe
-          rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
-          rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
-          delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
-                                                            - a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
-          // The extra term is dimensionless, so we are safe
+	    rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
+							     + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
+	    // The extra term is dimensionless, so we are safe
+	    rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
+	    rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
+	    delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
+							      - a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
+	    // The extra term is dimensionless, so we are safe
 
-          //Jump to next momentum bin:
-          idx+=(ppw->pv->l_max_lrs+1);
-        }
+	    //Jump to next momentum bin:
+	    idx+=(ppw->pv->l_max_lrs+1);
+	  }
 
-        rho_delta_lrs *= factor;
-        rho_plus_p_theta_lrs *= k*factor;
-        rho_plus_p_shear_lrs *= 2.0/3.0*factor;
-        delta_p_lrs *= factor/3.;
+	  rho_delta_lrs *= factor;
+	  rho_plus_p_theta_lrs *= k*factor;
+	  rho_plus_p_shear_lrs *= 2.0/3.0*factor;
+	  delta_p_lrs *= factor/3.;
 
-        delta_lrs = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
-        theta_lrs = rho_plus_p_theta_lrs/
-          (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
-        shear_lrs = rho_plus_p_shear_lrs/
-          (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
-        delta_p_over_delta_rho_lrs = delta_p_lrs/rho_delta_lrs;
+	  delta_lrs = rho_delta_lrs/ppw->pvecback[pba->index_bg_rho_lrs_F];
+	  theta_lrs = rho_plus_p_theta_lrs/
+	    (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
+	  shear_lrs = rho_plus_p_shear_lrs/
+	    (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
+	  delta_p_over_delta_rho_lrs = delta_p_lrs/rho_delta_lrs;
 
+	}
+      } else{
+	// Nugget approximation: the perturbations are evolved integrated:
+	rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F];
+	p_lrs_bg = pvecback[pba->index_bg_p_lrs_F];
+	pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
+	w_lrs = p_lrs_bg/rho_lrs_bg;
+
+	delta_lrs = y[idx];
+	theta_lrs = y[idx+1];
+	shear_lrs = 0.;
+	//This is the adiabatic sound speed:
+	delta_p_over_delta_rho_lrs = 0.;
+	idx += ppw->pv->l_max_lrs+1;
       }
     }
 
@@ -9570,7 +9831,8 @@ int perturb_print_variables(double tau,
       double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
       
       double M_delta_phi=0;
-      if (ppt->has_lrs_pt == _TRUE_)
+      if (ppt->has_lrs_pt == _TRUE_
+	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off))
         if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off)
           M_delta_phi = y[ppw->pv->index_pt_Mlrs];
         else
@@ -9593,7 +9855,10 @@ int perturb_print_variables(double tau,
         rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
 							 + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
 	rho_plus_p_theta_lrs += q2*q*pba->w_lrs[index_q]*y[idx+1];
-        rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
+	if(pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)
+	  rho_plus_p_shear_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*y[idx+2];
+	else
+	  rho_plus_p_shear_lrs += 0.;
         delta_p_lrs += q2*q2/epsilon*pba->w_lrs[index_q]*(y[idx]
 							   - a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * M_delta_phi / T_F);
 	// The extra term is dimensionless, so we are safe
@@ -10208,7 +10473,8 @@ int perturb_derivs(double tau,
     
     /* jordi */
     // ivan
-    if (ppt->has_lrs_pt == _TRUE_){
+    if (ppt->has_lrs_pt == _TRUE_
+	&& (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)){
       // Background quantities
       double a_prime_over_a = ppw->pvecback[pba->index_bg_H] * ppw->pvecback[pba->index_bg_a];
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
@@ -10564,7 +10830,8 @@ int perturb_derivs(double tau,
 
       double M_delta_phi=0;
       double M_delta_phi_prime=0;
-      if (ppt->has_lrs_pt == _TRUE_)
+      if (ppt->has_lrs_pt == _TRUE_
+	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off))
         if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
           M_delta_phi = y[ppw->pv->index_pt_Mlrs];
           M_delta_phi_prime = y[ppw->pv->index_pt_Mlrs_prime];
@@ -10575,7 +10842,8 @@ int perturb_derivs(double tau,
       
       /** - ----> first case: use a fluid approximation (lrsfa) */
       //TBC: curvature
-      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on) {
+      if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on
+	 && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
         /** - -----> define intermediate quantitites */
 	// Background quantities
 	double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
@@ -10662,7 +10930,7 @@ int perturb_derivs(double tau,
       
       /** - ----> second case: use exact equation (Boltzmann hierarchy on momentum grid) */
       
-      else {
+      else if (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off) {
 
         /** - -----> loop over momentum */
         double T0_F = pba->T_cmb*pba->lrs_T_F*_k_B_/_eV_;//T in electronvolt
@@ -10706,6 +10974,19 @@ int perturb_derivs(double tau,
 
           idx += (pv->l_max_lrs+1);
         }
+      }
+      /** - ----> second case: use CDM-like equation for nuggets */
+      else {
+        /** - -----> exact continuity equation */
+        dy[idx] = -(y[idx+1]+metric_continuity);
+
+        /** - -----> exact euler equation */
+
+        dy[idx+1] = -a_prime_over_a*y[idx+1] + metric_euler;
+
+	/** - -----> jump to next species */
+        
+        idx += pv->l_max_lrs+1;
       }
     }
 
@@ -11023,9 +11304,9 @@ int perturb_derivs(double tau,
     }
 
     /** - --> Scalar-mediated long range interaction */
-    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations
+    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations, or nuggets
     //TBC: curvature in all ncdm
-    if (ppt->evolve_tensor_ncdm == _TRUE_) {
+    if (ppt->evolve_tensor_lrs == _TRUE_) {
 
       idx = pv->index_pt_psi0_lrs;
 
