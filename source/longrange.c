@@ -497,6 +497,11 @@ int instabilityOnset(struct background * pba, double * a_rel){
     mT_over_T = mT_over_T_log[99];
   }
 
+  if (mT_over_T < 0){ // Always stable
+    *a_rel = 1e99;
+    return _SUCCESS_;
+  }
+
   /* Convert mT_over_T to scale factor */
 
   double I_Mphi;

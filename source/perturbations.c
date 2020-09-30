@@ -7173,7 +7173,7 @@ int perturb_approximations(
         if (ppw->pvecback[pba->index_bg_lrs_a_over_aunstable] > 1)
 	  ppw->approx[ppw->index_ap_lrsnug] = (int)lrsnug_on;
         else
-  	ppw->approx[ppw->index_ap_lrsnug] = (int)lrsnug_off;
+	  ppw->approx[ppw->index_ap_lrsnug] = (int)lrsnug_off;
       }
     }
   }
