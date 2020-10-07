@@ -1248,15 +1248,53 @@ int input_read_parameters(
   else if (pba->K < 0.) pba->sgnK = -1;
 
   /** - Long range interaction parameters */
-  class_read_string("log10_lrs",string1);
-  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
-    pba->has_log10_lrs = _TRUE_;
-  }else{
-    pba->has_log10_lrs = _FALSE_;
+  class_call(parser_read_string(pfc,
+				"longrangescalar",
+				&(string1),
+				&(flag1),
+				errmsg),
+	     errmsg,
+	     errmsg);
+  if ((flag1 == _TRUE_)) {
+    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+      pba->has_lrs = _TRUE_;
   }
-  
 
+  class_call(parser_read_string(pfc,
+				"longrangescalar_pt",
+				&(string1),
+				&(flag1),
+				errmsg),
+	     errmsg,
+	     errmsg);
+  if ((flag1 == _TRUE_)) {
+    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+      pba->has_lrs_pt = _TRUE_;
+  }
 
+  class_call(parser_read_string(pfc,
+				"longrangescalar_nuggets",
+				&(string1),
+				&(flag1),
+				errmsg),
+	     errmsg,
+	     errmsg);
+  if ((flag1 == _TRUE_)) {
+    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+      pba->has_lrs_nuggets = _TRUE_;
+  }
+
+  class_call(parser_read_string(pfc,
+				"log10_lrs",
+				&(string1),
+				&(flag1),
+				errmsg),
+	     errmsg,
+	     errmsg);
+  if ((flag1 == _TRUE_)) {
+    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+      pba->has_log10_lrs = _TRUE_;
+  }
 
   if(pba->has_log10_lrs == _TRUE_){
     double daux;
@@ -1268,30 +1306,9 @@ int input_read_parameters(
     class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
     class_read_double("lrs_M_phi", pba->lrs_M_phi);
   }
-  class_read_double("lrs_m_F",pba->lrs_m_F);
+  class_read_double("lrs_m_F", pba->lrs_m_F);
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
-  class_read_string("longrangescalar",string1);
-
-  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
-    pba->has_lrs = _TRUE_;
-  }else{
-    pba->has_lrs = _FALSE_;
-  }
-  
-  class_read_string("longrangescalar_pt",string1);
-  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
-    ppt->has_lrs_pt = _TRUE_;
-  }else{
-    ppt->has_lrs_pt = _FALSE_;
-  }
-
-  class_read_string("longrangescalar_nuggets",string1);
-  if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
-    pba->has_lrs_nuggets = _TRUE_;
-  }else{
-    pba->has_lrs_nuggets = _FALSE_;
-  }
 
   
   // Tolerance
@@ -3327,6 +3344,9 @@ int input_default_params(
   pba->lrs_input_q_size = -1;
   pba->lrs_qmax = 15.;
   pba->has_lrs = _FALSE_;
+  pba->has_lrs_pt = _FALSE_;
+  pba->has_lrs_nuggets = _FALSE_;
+  pba->has_log10_lrs = _FALSE_;
   
 
   pba->Omega0_k = 0.;
