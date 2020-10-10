@@ -1269,7 +1269,7 @@ int input_read_parameters(
 	     errmsg);
   if ((flag1 == _TRUE_)) {
     if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
-      pba->has_lrs_pt = _TRUE_;
+      ppt->has_lrs_pt = _TRUE_;
   }
 
   class_call(parser_read_string(pfc,
@@ -3344,7 +3344,7 @@ int input_default_params(
   pba->lrs_input_q_size = -1;
   pba->lrs_qmax = 15.;
   pba->has_lrs = _FALSE_;
-  pba->has_lrs_pt = _FALSE_;
+  ppt->has_lrs_pt = _FALSE_;
   pba->has_lrs_nuggets = _FALSE_;
   pba->has_log10_lrs = _FALSE_;
   

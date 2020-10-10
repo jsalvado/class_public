@@ -368,8 +368,10 @@ int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message)
  */
 int getPhi_M(struct background * pba, double z, double * phi_M){
   double m_F_over_T = pba->lrs_m_F_over_T0 / (1.+z);
-  if(m_F_over_T < 1e-5){ // Analytic result in the ultrarelativistic regime
-    double T = pba->lrs_m_F / m_F_over_T; // Temperature [eV]
+  double T = pba->lrs_m_F / m_F_over_T; // Temperature [eV]
+  if(m_F_over_T < 1e-5 ||
+     m_F_over_T/(pba->lrs_g_F/24. * SQR(pba->lrs_g_over_M*T)) < 1e-5){
+    // Analytic result in the ultrarelativistic regime
     *phi_M = - pba->lrs_g_F/24. * pba->lrs_g_over_M * m_F_over_T * CUB(T) /
       (1 + pba->lrs_g_F/24. * SQR(pba->lrs_g_over_M) * SQR(T));
     return _SUCCESS_;
