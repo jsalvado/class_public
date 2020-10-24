@@ -5911,8 +5911,6 @@ int perturb_vector_init(
 	    a = ppw->pvecback[pba->index_bg_a];
 	    index_pt = ppw->pv->index_pt_psi0_lrs;
           
-	    rho_plus_p_lrs = ppw->pvecback[pba->index_bg_rho_lrs_F]+
-	      ppw->pvecback[pba->index_bg_p_lrs_F];
 	    for(l=0; l<=1; l++){
 	      ppv->y[ppv->index_pt_psi0_lrs+l] = 0.0;
 	    }
@@ -5944,13 +5942,13 @@ int perturb_vector_init(
 	      //Jump to next momentum bin in ppw->pv->y:
 	      index_pt += (ppw->pv->l_max_lrs+1);
 	    }
-	    ppv->y[ppv->index_pt_psi0_lrs] *=factor/ppw->pvecback[pba->index_bg_rho_lrs_F];
-	    ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor/rho_plus_p_lrs;
+	    ppv->y[ppv->index_pt_psi0_lrs] *=factor; 
+	    ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor; 
           } else{
 	    ppv->y[ppv->index_pt_psi0_lrs + 0] =
-		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 0];
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 0] * ppw->pvecback[pba->index_bg_rho_lrs_F]; // For nuggets, we keep delta_rho
 	    ppv->y[ppv->index_pt_psi0_lrs + 1] =
-		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 1];
+	      ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 1] * (ppw->pvecback[pba->index_bg_rho_lrs_F] + ppw->pvecback[pba->index_bg_p_lrs_F]); // For nuggets, we keep (rho+p)*theta
 	  }
 	}
       }
@@ -8151,16 +8149,16 @@ int perturb_total_stress_energy(
         
 	rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
 	if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
-	  ppw->theta_lrs_F = y[idx+1];
+	  ppw->theta_lrs_F = y[idx+1] / (rho_plus_p_lrs);
 	  ppw->shear_lrs_F = 0.;
 	}
 
 	// Fermion density and pressure
-	ppw->delta_lrs_F = y[idx];
+	ppw->delta_lrs_F = y[idx] / rho_lrs_bg;
 	ppw->delta_p_lrs_F = 0.;
         
-	ppw->delta_rho += rho_lrs_bg*y[idx];
-	ppw->rho_plus_p_theta += rho_plus_p_lrs*y[idx+1];
+	ppw->delta_rho += y[idx]; // For nuggets, we keep delta_rho
+	ppw->rho_plus_p_theta += y[idx+1]; // For nuggets, we keep (rho+p)*theta
 	ppw->delta_p += 0;
         
 	ppw->rho_plus_p_tot += rho_plus_p_lrs;
@@ -9523,8 +9521,8 @@ int perturb_print_variables(double tau,
 	pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
 	w_lrs = p_lrs_bg/rho_lrs_bg;
 
-	delta_lrs = y[idx];
-	theta_lrs = y[idx+1];
+	delta_lrs = y[idx] / rho_lrs_bg; // For nuggets, we keep delta_rho
+	theta_lrs = y[idx+1] / (rho_lrs_bg + p_lrs_bg); // For nuggets, we keep (rho+p)*theta
 	shear_lrs = 0.;
 	//This is the adiabatic sound speed:
 	delta_p_over_delta_rho_lrs = 0.;
@@ -10482,6 +10480,7 @@ int perturb_derivs(double tau,
       double M_phi_dot_over_H = phi_M_prime / a_prime_over_a; // Background M_phi_dot/H [eV]
       double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
       double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+      rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
       
       if(ppw->approx[ppw->index_ap_lrsfo1] == (int)lrsfo1_off && ppw->approx[ppw->index_ap_lrsfo2] == (int)lrsfo2_off){
         /* Derivative of the field value */
@@ -10977,12 +10976,14 @@ int perturb_derivs(double tau,
       }
       /** - ----> second case: use CDM-like equation for nuggets */
       else {
+	rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
+	
         /** - -----> exact continuity equation */
-        dy[idx] = -(y[idx+1]+metric_continuity);
+        dy[idx] = -3*a_prime_over_a*y[idx] - y[idx+1] - metric_continuity * rho_lrs_bg;
 
         /** - -----> exact euler equation */
 
-        dy[idx+1] = -a_prime_over_a*y[idx+1] + metric_euler;
+        dy[idx+1] = -4*a_prime_over_a*y[idx+1] + metric_euler * rho_lrs_bg;
 
 	/** - -----> jump to next species */
         
