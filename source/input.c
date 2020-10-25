@@ -1335,31 +1335,68 @@ int input_read_parameters(
 	       errmsg);
 
     // Compute Omega_0
-    double phi_M; // Scalar field times mass [eV^2]
-    class_call(getPhi_M(pba, 0, &phi_M),
-	       pba->error_message,
-	       pba->error_message); 
-    double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
-
-    double rho_F;
-    class_call(background_lrs_momenta(
-				       pba->q_lrs_bg,
-				       pba->w_lrs_bg,
-				       pba->q_size_lrs_bg,
-				       get_mT_over_T0(pba, phi_M),
-				       pba->factor_lrs,
-				       0,
-				       &rho_F,
-				       NULL,
-				       NULL,
-				       NULL,
-				       NULL,
-				       NULL),
+    
+    /* Check for stability */
+    double a_rel_unstable_lrs;
+    class_call(instabilityOnset(pba, &a_rel_unstable_lrs),
 	       pba->error_message,
 	       pba->error_message);
+    if (pba->has_lrs_nuggets == _FALSE_ || 1 < a_rel_unstable_lrs){ // Stable
+      double phi_M; // Scalar field times mass [eV^2]
+      class_call(getPhi_M(pba, 0, &phi_M),
+		 pba->error_message,
+		 pba->error_message); 
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
 
-    pba->Omega0_lrs = (rho_phi + rho_F)/SQR(pba->H0);
+      double rho_F;
+      class_call(background_lrs_momenta(
+					pba->q_lrs_bg,
+					pba->w_lrs_bg,
+					pba->q_size_lrs_bg,
+					get_mT_over_T0(pba, phi_M),
+					pba->factor_lrs,
+					0,
+					&rho_F,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL),
+		 pba->error_message,
+		 pba->error_message);
+
+      pba->Omega0_lrs = (rho_phi + rho_F)/SQR(pba->H0);
+    } else { // Unstable: nuggets have formed
+      double phi_M;
+      // Compute the total energy density at the stable-unstable transition
+      class_call(getPhi_M(pba, 1./a_rel_unstable_lrs-1., &phi_M),
+		 pba->error_message,
+		 pba->error_message);
+      double mT_over_T0 = get_mT_over_T0(pba, phi_M);
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+      double rho_F;
+      class_call(background_lrs_momenta(
+					pba->q_lrs_bg,
+					pba->w_lrs_bg,
+					pba->q_size_lrs_bg,
+					mT_over_T0,
+					pba->factor_lrs,
+					1./a_rel_unstable_lrs-1.,
+					&rho_F,
+					NULL,
+					NULL,
+					NULL,
+					NULL,
+					NULL),
+		 pba->error_message,
+		 pba->error_message);
+
+      double rho = (rho_phi + rho_F) / CUB(1 / a_rel_unstable_lrs);
+      pba->Omega0_lrs = rho/SQR(pba->H0);
+    }
+
     Omega_tot += pba->Omega0_lrs;
+
   }
 
   /** - Omega_0_lambda (cosmological constant), Omega0_fld (dark energy fluid), Omega0_scf (scalar field) */
