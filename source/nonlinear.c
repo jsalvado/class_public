@@ -1736,7 +1736,7 @@ int nonlinear_indices(
      first) */
 
   pnl->has_pk_m = _TRUE_;
-  if (pba->has_ncdm == _TRUE_) {
+  if (pba->has_ncdm == _TRUE_ || pba->has_lrs == _TRUE_) {
     pnl->has_pk_cb = _TRUE_;
   }
   else {
