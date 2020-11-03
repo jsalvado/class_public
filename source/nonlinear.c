@@ -1252,6 +1252,12 @@ int nonlinear_init(
           fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But it sounds like you are running with a WDM component of mass %f eV, which makes the use of Halofit suspicious.\n",pba->m_ncdm_in_eV[index_ncdm]);
       }
     }
+
+    if (pba->has_lrs) {
+      if (pba->lrs_m_F >  _M_EV_TOO_BIG_FOR_HALOFIT_)
+	fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But it sounds like you are running with a WDM component of mass %f eV, which makes the use of Halofit suspicious.\n",pba->lrs_m_F);
+    }
+    
     if (pba->has_idm_dr){
       fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But you have requested interacting dark matter (idm_dr), which makes the use of Halofit or HMCode unreliable.\n");
     }
@@ -2601,7 +2607,7 @@ int nonlinear_halofit(
   class_alloc(pvecback,pba->bg_size*sizeof(double),pnl->error_message);
 
   if ((pnl->has_pk_m == _TRUE_) && (index_pk == pnl->index_pk_m)) {
-    fnu = pba->Omega0_ncdm_tot/pba->Omega0_m;
+    fnu = (pba->Omega0_ncdm_tot + pba->Omega0_lrs)/pba->Omega0_m;
   }
   else if ((pnl->has_pk_cb == _TRUE_) && (index_pk == pnl->index_pk_cb)) {
     fnu = 0.;
@@ -3159,12 +3165,12 @@ int nonlinear_hmcode(
   /** Compute background quantitites today */
 
   Omega0_m = pba->Omega0_m;
-  fnu      = pba->Omega0_ncdm_tot/Omega0_m;
+  fnu      = (pba->Omega0_ncdm_tot + pba->Omega0_lrs)/Omega0_m;
 
   /** If index_pk_cb, choose Omega0_cb as the matter density parameter.
    * If index_pk_m, choose Omega0_cbn as the matter density parameter. */
   if (index_pk==pnl->index_pk_cb){
-    Omega0_m = Omega0_m - pba->Omega0_ncdm_tot;
+    Omega0_m = Omega0_m - pba->Omega0_ncdm_tot - pba->Omega0_lrs;
   }
 
   anorm    = 1./(2*pow(_PI_,2));
@@ -3188,7 +3194,7 @@ int nonlinear_hmcode(
   free(pvecback);
 
   /** Test whether pk_cb has to be taken into account (only if we have massive neutrinos)*/
-  if (pba->has_ncdm==_TRUE_){
+  if (pba->has_ncdm==_TRUE_ || pba->has_lrs==_TRUE_){
     index_pk_cb = pnl->index_pk_cb;
   }
   else {
@@ -4186,7 +4192,7 @@ int nonlinear_hmcode_sigma8_at_z(
   }
 
 
-  if (pba->has_ncdm){
+  if (pba->has_ncdm || pba->has_lrs){
 
     if (pnl->tau_size == 1) {
       *sigma_8_cb = pnw->sigma_8[pnl->index_pk_cb][0];
@@ -4263,7 +4269,7 @@ int nonlinear_hmcode_sigmadisp_at_z(
                pnl->error_message);
   }
 
-  if (pba->has_ncdm){
+  if (pba->has_ncdm || pba->has_lrs){
 
     if (pnl->tau_size == 1) {
       *sigma_disp_cb = pnw->sigma_disp[pnl->index_pk_cb][0];
@@ -4340,7 +4346,7 @@ int nonlinear_hmcode_sigmadisp100_at_z(
                pnl->error_message);
   }
 
-  if (pba->has_ncdm){
+  if (pba->has_ncdm || pba->has_lrs){
 
     if (pnl->tau_size == 1) {
       *sigma_disp_100_cb = pnw->sigma_disp_100[pnl->index_pk_cb][0];
@@ -4416,7 +4422,7 @@ int nonlinear_hmcode_sigmaprime_at_z(
                pnl->error_message);
   }
 
-  if (pba->has_ncdm){
+  if (pba->has_ncdm || pba->has_lrs){
 
     if (pnl->tau_size == 1) {
       *sigma_prime_cb = pnw->sigma_prime[pnl->index_pk_cb][0];
