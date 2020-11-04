@@ -1302,13 +1302,13 @@ int input_read_parameters(
     pba->lrs_g_over_M = pow(10.,daux);
     class_read_double("lrs_M_phi",daux);
     pba->lrs_M_phi = pow(10.,daux);
-    /* class_read_double("lrs_m_F", daux); */
-    /* pba->lrs_m_F = pow(10.,daux); */
+    class_read_double("lrs_m_F", daux);
+    pba->lrs_m_F = pow(10.,daux);
   }else{
     class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
     class_read_double("lrs_M_phi", pba->lrs_M_phi);
+    class_read_double("lrs_m_F", pba->lrs_m_F);
   }
-  class_read_double("lrs_m_F", pba->lrs_m_F);
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
 
