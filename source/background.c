@@ -432,24 +432,24 @@ int background_functions(
   /* We will also include the fermion energy density */
   if (pba->has_lrs == _TRUE_) {
     /* Compute scalar field and effective fermion mass */
-    double phi_M; // Scalar field times mass [eV^2]
-    class_call(getPhi_M(pba, 1./a_rel-1., &phi_M),
+    double phi_M_lrs; // Scalar field times mass [eV^2]
+    class_call(get_phi_M_lrs(pba, 1./a_rel-1., &phi_M_lrs),
 	       pba->error_message,
 	       pba->error_message);
-    double mT_over_T0 = get_mT_over_T0(pba, phi_M);
+    double mT_over_T0_lrs = get_mT_over_T0_lrs(pba, phi_M_lrs);
 
     /* Check for stability */
-    class_call(instabilityOnset(pba, &a_rel_unstable_lrs),
+    class_call(instabilityOnset_lrs(pba, &a_rel_unstable_lrs),
 	       pba->error_message,
 	       pba->error_message);
     pvecback[pba->index_bg_lrs_a_over_aunstable] = a_rel / a_rel_unstable_lrs;
 
     if (pba->has_lrs_nuggets == _FALSE_ || a_rel < a_rel_unstable_lrs){ // Stable
-      pvecback[pba->index_bg_phi_M_lrs] = phi_M;
-      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0;
+      pvecback[pba->index_bg_phi_M_lrs] = phi_M_lrs;
+      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0_lrs;
 
       /* Scalar quantitites */
-      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
       double p_phi = -rho_phi;
 
       /* Fermion quantities */
@@ -458,7 +458,7 @@ int background_functions(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					mT_over_T0,
+					mT_over_T0_lrs,
 					pba->factor_lrs,
 					1./a_rel-1.,
 					&rho_F,
@@ -476,7 +476,7 @@ int background_functions(
 
       T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
 
-      pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs; // Scalar thermal mass squared over vacuum mass squared
+      pvecback[pba->index_bg_MTsq_over_Msq_lrs] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs; // Scalar thermal mass squared over vacuum mass squared
 
       /* Add up scalar and fermion */
       pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
@@ -495,12 +495,12 @@ int background_functions(
     } else { // Unstable: nuggets have formed
       /* Compute the scalar thermal mass as if no nugget condensation had taken place.
 	 This is to make M_T diminish faster than H, necessary for the proper behaviour of
-	 the approximation lrsfo2 */
+	 the approximation lrsad2 */
       class_call(background_lrs_momenta(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					mT_over_T0,
+					mT_over_T0_lrs,
 					pba->factor_lrs,
 					1./a_rel-1.,
 					NULL,
@@ -512,20 +512,20 @@ int background_functions(
 		 pba->error_message,
 		 pba->error_message);
       T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
-      pvecback[pba->index_bg_lrs_MTsq_over_Msq] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs;
+      pvecback[pba->index_bg_MTsq_over_Msq_lrs] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs;
       
       // Compute the total energy density at the stable-unstable transition
-      class_call(getPhi_M(pba, 1./a_rel_unstable_lrs-1., &phi_M),
+      class_call(get_phi_M_lrs(pba, 1./a_rel_unstable_lrs-1., &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message);
-      mT_over_T0 = get_mT_over_T0(pba, phi_M);
-      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+      mT_over_T0_lrs = get_mT_over_T0_lrs(pba, phi_M_lrs);
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
       double rho_F;
       class_call(background_lrs_momenta(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					mT_over_T0,
+					mT_over_T0_lrs,
 					pba->factor_lrs,
 					1./a_rel_unstable_lrs-1.,
 					&rho_F,
@@ -543,7 +543,7 @@ int background_functions(
       pvecback[pba->index_bg_pseudo_p_lrs_F] = 0.;
       pvecback[pba->index_bg_p_lrs] = 0.;
 
-      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0; // Keep this quantity frozen at instability onset to properly get the nugget density perturbations when switching approximations (L5921 in perturbations.c)
+      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0_lrs; // Keep this quantity frozen at instability onset to properly get the nugget density perturbations when switching approximations (L5921 in perturbations.c)
       pvecback[pba->index_bg_rho_lrs_F] = (rho_phi + rho_F) / CUB(a_rel / a_rel_unstable_lrs);
       pvecback[pba->index_bg_rho_lrs] = pvecback[pba->index_bg_rho_lrs_F];
 
@@ -604,13 +604,13 @@ int background_functions(
 
   /* lrs-related quantities that depend on H */
   if (pba->has_lrs ==_TRUE_){
-    /* Mphi_prime */
+    /* phi_M_prime */
     if( (pba->has_lrs_nuggets == _TRUE_ && a_rel > a_rel_unstable_lrs) // Unstable, or...
-	|| SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 1. // This is to avoid the term hdot phidot oversourcing the perturbations. See e-mail on 28th of July
+	|| SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_MTsq_over_Msq_lrs]) / SQR(pvecback[pba->index_bg_H]) <= 1. // This is to avoid the term hdot phidot oversourcing the perturbations. See e-mail on 28th of July
 	) 
-      pvecback[pba->index_bg_lrs_M_phi_prime] = 0.;
+      pvecback[pba->index_bg_phi_M_prime_lrs] = 0.;
     else      
-      pvecback[pba->index_bg_lrs_M_phi_prime] =
+      pvecback[pba->index_bg_phi_M_prime_lrs] =
 	pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // Mphidot_over_H [eV^2]
 	pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
 	a_rel; //Mphiprime [eV^2/Mpc]
@@ -619,7 +619,7 @@ int background_functions(
     if( (pba->has_lrs_nuggets == _FALSE_ || a_rel < a_rel_unstable_lrs) // Stable, and...
 	&& T_lrs < pba->lrs_m_F // non-relativistic without the interaction
 	)
-      class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_lrs_MTsq_over_Msq]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
+      class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_MTsq_over_Msq_lrs]) / SQR(pvecback[pba->index_bg_H]) <= 100.,
 		 pba->error_message,
 		 "lrs: The effective scalar mass is smaller than 10*H for T_F/m0 = %e", T_lrs/pba->lrs_m_F);
 
@@ -1193,8 +1193,8 @@ int background_indices(
   class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_rho_lrs_F,pba->has_lrs,index_bg,1);
-  class_define_index(pba->index_bg_lrs_M_phi_prime,pba->has_lrs,index_bg,1);
-  class_define_index(pba->index_bg_lrs_MTsq_over_Msq,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_phi_M_prime_lrs,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_MTsq_over_Msq_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_pseudo_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_phi_M_lrs,pba->has_lrs,index_bg,1);
@@ -2253,15 +2253,15 @@ int background_initial_conditions(
       is_early_enough = _TRUE_;
       rho_lrs_rel_tot = 0.;
 
-      double phi_M; // Scalar field times mass [eV^2]
-      class_call(getPhi_M(pba, pba->a_today/a-1.0, &phi_M),
+      double phi_M_lrs; // Scalar field times mass [eV^2]
+      class_call(get_phi_M_lrs(pba, pba->a_today/a-1.0, &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message); 
 
       class_call(background_lrs_momenta(pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					get_mT_over_T0(pba, phi_M),
+					get_mT_over_T0_lrs(pba, phi_M_lrs),
 					pba->factor_lrs,
 					pba->a_today/a-1.0,
 					&rho_lrs,

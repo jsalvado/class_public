@@ -322,13 +322,17 @@ class_precision_parameter(lrs_fluid_approximation,int,lrsfa_none) /**< method fo
  */
 class_precision_parameter(ncdm_fluid_trigger_tau_over_tau_k,double,31.0)
 
+/**
+ * when to switch off fluid approximation for long range
+ * interacting fermion
+ */
 class_precision_parameter(lrs_fluid_trigger_tau_over_tau_k,double,32.0)
 
 /**
- * When to switch on lrs fast oscillation approximation
- * It is done if sqrt((M^2+MT^2)/(k^2/a^2+H^2)) > lrs_fastosc_trigger_M_over_kH
+ * When to switch on lrs adiabatic approximation
+ * It is done if sqrt((M^2+MT^2)/(k^2/a^2+H^2)) > lrs_adiab_trigger_M_over_kH
  */
-class_precision_parameter(lrs_fastosc_trigger_M_over_kH,double,1e2)
+class_precision_parameter(lrs_adiab_trigger_M_over_kH,double,1e2)
 
 /**
  * whether CMB source functions can be approximated as zero when

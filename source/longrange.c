@@ -313,7 +313,7 @@ int background_lrs_momenta(
   return _SUCCESS_;
 }
 
-inline double get_mT_over_T0(struct background * pba, double phi_M){
+inline double get_mT_over_T0_lrs(struct background * pba, double phi_M){
   // Convert phi_M to J and divide by kB*T0
   double phi_M_over_T0 = phi_M * _eV_ / (_k_B_*pba->lrs_T_F*pba->T_cmb);
 
@@ -337,7 +337,7 @@ int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message)
   class_call(background_lrs_momenta(pba->q_lrs_bg,
 				    pba->w_lrs_bg,
 				    pba->q_size_lrs_bg,
-				    get_mT_over_T0(pba, phi_M),
+				    get_mT_over_T0_lrs(pba, phi_M),
 				    pba->factor_lrs,
 				    pbaz->z,
 				    NULL,
@@ -366,7 +366,7 @@ int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message)
  * @param z      Input: redshift
  * @param phi_M  Output: scalar field times mass [eV^2]
  */
-int getPhi_M(struct background * pba, double z, double * phi_M){
+int get_phi_M_lrs(struct background * pba, double z, double * phi_M){
   double m_F_over_T = pba->lrs_m_F_over_T0 / (1.+z);
   double T = pba->lrs_m_F / m_F_over_T; // Temperature [eV]
   if(m_F_over_T < 1e-5 ||
@@ -417,7 +417,7 @@ int getPhi_M(struct background * pba, double z, double * phi_M){
  * @param pba    Input: pointer to background structure
  * @param a_rel  Output: a/a_0
  */
-int instabilityOnset(struct background * pba, double * a_rel){
+int instabilityOnset_lrs(struct background * pba, double * a_rel){
   double mT_over_T;
   
   /* Interpolate to obtain mT/T at instability onset */

@@ -1261,7 +1261,7 @@ int input_read_parameters(
   }
 
   class_call(parser_read_string(pfc,
-				"longrangescalar_pt",
+				"longrangescalar_phi_pt",
 				&(string1),
 				&(flag1),
 				errmsg),
@@ -1269,7 +1269,7 @@ int input_read_parameters(
 	     errmsg);
   if ((flag1 == _TRUE_)) {
     if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
-      ppt->has_lrs_pt = _TRUE_;
+      ppt->has_lrs_phi_pt = _TRUE_;
   }
 
   class_call(parser_read_string(pfc,
@@ -1302,13 +1302,13 @@ int input_read_parameters(
     pba->lrs_g_over_M = pow(10.,daux);
     class_read_double("lrs_M_phi",daux);
     pba->lrs_M_phi = pow(10.,daux);
-    class_read_double("lrs_m_F", daux);
-    pba->lrs_m_F = pow(10.,daux);
+    /* class_read_double("lrs_m_F", daux); */
+    /* pba->lrs_m_F = pow(10.,daux); */
   }else{
     class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
     class_read_double("lrs_M_phi", pba->lrs_M_phi);
-    class_read_double("lrs_m_F", pba->lrs_m_F);
   }
+  class_read_double("lrs_m_F", pba->lrs_m_F);
   class_read_int("lrs_g_F",pba->lrs_g_F);
   class_read_double("lrs_T_F",pba->lrs_T_F);
 
@@ -1338,22 +1338,22 @@ int input_read_parameters(
     
     /* Check for stability */
     double a_rel_unstable_lrs;
-    class_call(instabilityOnset(pba, &a_rel_unstable_lrs),
+    class_call(instabilityOnset_lrs(pba, &a_rel_unstable_lrs),
 	       pba->error_message,
 	       pba->error_message);
     if (pba->has_lrs_nuggets == _FALSE_ || 1 < a_rel_unstable_lrs){ // Stable
-      double phi_M; // Scalar field times mass [eV^2]
-      class_call(getPhi_M(pba, 0, &phi_M),
+      double phi_M_lrs; // Scalar field times mass [eV^2]
+      class_call(get_phi_M_lrs(pba, 0, &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message); 
-      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
 
       double rho_F;
       class_call(background_lrs_momenta(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					get_mT_over_T0(pba, phi_M),
+					get_mT_over_T0_lrs(pba, phi_M_lrs),
 					pba->factor_lrs,
 					0,
 					&rho_F,
@@ -1367,19 +1367,19 @@ int input_read_parameters(
 
       pba->Omega0_lrs = (rho_phi + rho_F)/SQR(pba->H0);
     } else { // Unstable: nuggets have formed
-      double phi_M;
+      double phi_M_lrs;
       // Compute the total energy density at the stable-unstable transition
-      class_call(getPhi_M(pba, 1./a_rel_unstable_lrs-1., &phi_M),
+      class_call(get_phi_M_lrs(pba, 1./a_rel_unstable_lrs-1., &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message);
-      double mT_over_T0 = get_mT_over_T0(pba, phi_M);
-      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M);
+      double mT_over_T0_lrs = get_mT_over_T0_lrs(pba, phi_M_lrs);
+      double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
       double rho_F;
       class_call(background_lrs_momenta(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
 					pba->q_size_lrs_bg,
-					mT_over_T0,
+					mT_over_T0_lrs,
 					pba->factor_lrs,
 					1./a_rel_unstable_lrs-1.,
 					&rho_F,
@@ -3383,7 +3383,7 @@ int input_default_params(
   pba->lrs_input_q_size = -1;
   pba->lrs_qmax = 15.;
   pba->has_lrs = _FALSE_;
-  ppt->has_lrs_pt = _FALSE_;
+  ppt->has_lrs_phi_pt = _FALSE_;
   pba->has_lrs_nuggets = _FALSE_;
   pba->has_log10_lrs = _FALSE_;
   
@@ -3463,7 +3463,7 @@ int input_default_params(
 
   //ppt->pk_only_cdm_bar=_FALSE_;
 
-  ppt->has_lrs_pt = _FALSE_;
+  ppt->has_lrs_phi_pt = _FALSE_;
   ppt->switch_sw = 1;
   ppt->switch_eisw = 1;
   ppt->switch_lisw = 1;

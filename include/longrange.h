@@ -34,13 +34,13 @@ extern "C" {
 			     double * I1, double * I2);
 
   // Returns the effective fermion mass divided by its present day temperature
-  double get_mT_over_T0(struct background * pba, double phi_M);
+  double get_mT_over_T0_lrs(struct background * pba, double phi_M);
 
   // Returns the scalar field times its mass solving the equations of motion
-  int getPhi_M(struct background * pba, double z, double *phi_M);
+  int get_phi_M_lrs(struct background * pba, double z, double *phi_M);
 
   // Returns the scale factor at adiabatic instability onset
-  int instabilityOnset(struct background * pba, double * a_rel);
+  int instabilityOnset_lrs(struct background * pba, double * a_rel);
 #ifdef __cplusplus
 }
 #endif

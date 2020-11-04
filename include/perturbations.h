@@ -33,8 +33,8 @@ enum rsa_idr_flags {rsa_idr_off, rsa_idr_on};
 enum ufa_flags {ufa_off, ufa_on};
 enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
 enum lrsfa_flags {lrsfa_off, lrsfa_on};
-enum lrsfo1_flags {lrsfo1_off, lrsfo1_on};
-enum lrsfo2_flags {lrsfo2_on, lrsfo2_off};
+enum lrsad1_flags {lrsad1_off, lrsad1_on};
+enum lrsad2_flags {lrsad2_on, lrsad2_off};
 enum lrsnug_flags {lrsnug_off, lrsnug_on};
 
 //@}
@@ -110,7 +110,7 @@ struct perturbs
 
   //@{
 
-  short has_lrs_pt;
+  short has_lrs_phi_pt; /**< shall we include long-range scalar field perturbations? */
   
   short has_perturbations; /**< do we need to compute perturbations at all ? */
 
@@ -253,7 +253,7 @@ struct perturbs
   short has_source_delta_idr;   /**< do we need source for delta of interacting dark radiation? */
   short has_source_delta_idm_dr;/**< do we need source for delta of interacting dark matter (with dr)? */
   short has_source_delta_ncdm;  /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_delta_lrs;  /**< do we need source for delta of scalar-mediated long range interaction? */
+  short has_source_delta_lrs;   /**< do we need source for fermion delta of scalar-mediated long range interaction? */
   short has_source_theta_m;     /**< do we need source for theta of total matter? */
   short has_source_theta_cb;    /**< do we ALSO need source for theta of ONLY cdm and baryon? */
   short has_source_theta_tot;   /**< do we need source for theta total? */
@@ -268,7 +268,7 @@ struct perturbs
   short has_source_theta_idr;   /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr;/**< do we need source for theta of interacting dark matter (with dr)? */
   short has_source_theta_ncdm;  /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_theta_lrs;  /**< do we need source for theta of scalar-mediated long range interaction? */
+  short has_source_theta_lrs;   /**< do we need source for fermion theta of scalar-mediated long range interaction? */
   short has_source_phi;         /**< do we need source for metric fluctuation phi? */
   short has_source_phi_prime;   /**< do we need source for metric fluctuation phi'? */
   short has_source_phi_plus_psi;/**< do we need source for metric fluctuation (phi+psi)? */
@@ -302,7 +302,7 @@ struct perturbs
   int index_tp_delta_idr; /**< index value for delta of interacting dark radiation */
   int index_tp_delta_idm_dr;/**< index value for delta of interacting dark matter (with dr)*/
   int index_tp_delta_ncdm1; /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
-  int index_tp_delta_lrs; /**< index value for delta of scalar-mediated long range interacting system */
+  int index_tp_delta_lrs; /**< index value for fermion delta of scalar-mediated long range interacting system */
   int index_tp_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_tp_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
 
@@ -320,7 +320,7 @@ struct perturbs
   int index_tp_theta_idm_dr;/**< index value for theta of interacting dark matter (with dr)*/
   int index_tp_theta_dr;    /**< index value for F1 of decay radiation */
   int index_tp_theta_ncdm1; /**< index value for theta of first non-cold dark matter species (e.g. massive neutrinos) */
-  int index_tp_theta_lrs;   /**< index value for theta of scalar-mediated long range interacting system */
+  int index_tp_theta_lrs;   /**< index value for fermion theta of scalar-mediated long range interacting system */
 
   int index_tp_phi;          /**< index value for metric fluctuation phi */
   int index_tp_phi_prime;    /**< index value for metric fluctuation phi' */
@@ -492,10 +492,9 @@ struct perturb_vector
   int index_pt_shear_idr; /**< shear of interacting dark radiation */
   int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
   int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
-  int index_pt_Mlrs;       /**< M*lrs jordi  */
-  int index_pt_Mlrs_prime; /**< M*lrs' jordi */
+  int index_pt_phi_M_lrs;       /**< for a long-range interaction, scalar field perturbation times its vacuum mass (eV^2) */
+  int index_pt_phi_M_prime_lrs; /**< for a long-range interaction, scalar field perturbation derivative wrt conformal time times its vacuum mass (eV^2/Mpc) */
 
-  
 /* perturbed recombination */
   int index_pt_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_pt_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
@@ -506,10 +505,11 @@ struct perturb_vector
   int index_pt_F0_dr;
   int l_max_dr;          /**< max momentum in Boltzmann hierarchy for dr) */
   int index_pt_psi0_ncdm1; /**< first multipole of perturbation of first ncdm species, Psi_0 */
-  int index_pt_psi0_lrs; /**< first multipole of perturbation of lrs, Psi_0 */
   int N_ncdm;		/**< number of distinct non-cold-dark-matter (ncdm) species */
   int* l_max_ncdm;	/**< mutipole l at which Boltzmann hierarchy is truncated (for each ncdm species) */
   int* q_size_ncdm;	/**< number of discrete momenta (for each ncdm species) */
+  // Same for long-range interacting species
+  int index_pt_psi0_lrs; /**< first multipole of perturbation of lrs, Psi_0 */
   int l_max_lrs;	/**< mutipole l at which Boltzmann hierarchy is truncated */
   int q_size_lrs;	/**< number of discrete momenta */
 
@@ -560,7 +560,6 @@ struct perturb_workspace
   int index_mt_hv_prime_prime;/**< Second derivative of Synchronous gauge vector metric perturbation \f$ h_v\f$ */
   int mt_size;                /**< size of metric perturbation vector */
 
-  
   //@}
 
   /** @name - value at a given time of all background/perturbed
@@ -601,11 +600,11 @@ struct perturb_workspace
   double * theta_ncdm;	/**< velocity divergence theta of each ncdm species */
   double * shear_ncdm;	/**< shear for each ncdm species */
 
-  double delta_lrs_F;	/**< relative density perturbation of scalar-mediated long range interaction */
-  double delta_p_lrs_F; /**< relative density perturbation of scalar-mediated long range interaction */
-  double theta_lrs_F;	/**< velocity divergence theta of scalar-mediated long range interaction */
-  double shear_lrs_F;	/**< shear for scalar-mediated long range interaction */
-  double M_delta_phi_lrsfo; /**< delta_phi in the fast oscillation approximation */
+  double delta_lrs_F;	/**< relative density perturbation of long-range interacting fermion  */
+  double delta_p_lrs_F; /**< pressure perturbation of long-range interacting fermion */
+  double theta_lrs_F;	/**< velocity divergence theta of long-range interacting fermion */
+  double shear_lrs_F;	/**< shear for long-range interacting fermion */
+  double delta_phi_M_lrsad; /**< for a long-range interaction, scalar field perturbation times its vacuum mass in the adiabatic approximation (eV^2) */
 
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */
@@ -646,9 +645,9 @@ struct perturb_workspace
   int index_ap_ufa; /**< index for ur fluid approximation */
   int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
   int index_ap_lrsfa; /**< index for lrs fluid approximation */
-  int index_ap_lrsfo1; /**< index for lrs fast oscillations 1*/
-  int index_ap_lrsfo2; /**< index for lrs fast oscillations 2*/
-  int index_ap_lrsnug; /**< index for lrs nuggets*/
+  int index_ap_lrsad1; /**< index for lrs adiabatic approximation 1 (triggered for large scalar vacuum masses) */
+  int index_ap_lrsad2; /**< index for lrs adiabatic approximation 2 (triggered for large scalar thermal masses) */
+  int index_ap_lrsnug; /**< index for lrs nugget approximation*/
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */

@@ -80,17 +80,16 @@ struct background
 
   double c_gamma_over_c_fld; /**< ppf parameter defined in eq. (16) of 0808.3125 [astro-ph] */
 
-  /* Parameters for the long range interaction */
-  double lrs_m_F; /**< Mass of the fermion sourcing the long range interaction */
-  double lrs_g_over_M; /**< Coupling divided by scalar mass */
-  int lrs_g_F; /**< Number of degrees of freedom of fermion sourcing the long range interaction */
+  /* Parameters of a long-range interacting fermion */
+  double lrs_m_F; /**< Vacuum mass of the fermion sourcing the long range interaction (eV) */
+  double lrs_g_over_M; /**< Coupling divided by scalar vacuum mass (eV\f$^-1\f$) */
+  int lrs_g_F; /**< Amount of fermion internal degrees of freedom*/
   double lrs_T_F; /**< Ratio between fermion and photon temperatures */
-  double lrs_M_phi; /**< Scalar field mass: d^2V/dphi^2*/
+  double lrs_M_phi; /**< Scalar vacuum mass*/
   
   double Omega0_lrs; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
-  double lrs_m_F_over_T0; /**< \f$ \Omega_{0 lrs} \f$: scalar-sourced long-range interaction */
+  double lrs_m_F_over_T0; /**< Ratio between vacuum fermion mass and its present-day temperature */
   
-
   double Omega0_ur; /**< \f$ \Omega_{0 \nu r} \f$: ultra-relativistic neutrinos */
 
   double Omega0_idr; /**< \f$ \Omega_{0 idr} \f$: interacting dark radiation */
@@ -205,16 +204,16 @@ struct background
   int index_bg_rho_dcdm;      /**< dcdm density */
   int index_bg_rho_dr;        /**< dr density */
 
-  int index_bg_rho_lrs;       /**< density of the fermion+scalar system in the presence of a long-range self interaction */
-  int index_bg_p_lrs;         /**< pressure of the fermion+scalar system in the presence of a long-range self interaction */
-  int index_bg_rho_lrs_F;     /**< density of the fermion in the presence of a long-range self interaction */
-  int index_bg_lrs_M_phi_prime; /**< lrs scalar field prime times mass*/
-  int index_bg_lrs_MTsq_over_Msq; /**< Scalar thermal mass squared over vacuum mass squared*/
-  int index_bg_p_lrs_F;       /**< pressure of the fermion in the presence of a long-range self interaction */
-  int index_bg_pseudo_p_lrs_F;/**< pseudo-pressure of the fermion in the presence of a long-range self interaction */
-  int index_bg_phi_M_lrs;/**< scalar field times its mass [eV^2] */
-  int index_bg_mT_over_T0_lrs;/**< effective fermion mass divided by its **current day** temperature */
-  int index_bg_lrs_a_over_aunstable;/**< scale factor over scale factor of adiabatic instability onset*/
+  int index_bg_rho_lrs;              /**< for a long-range interaction, energy density in the fermion+scalar system */
+  int index_bg_p_lrs;                /**< for a long-range interaction, pressure of the fermion+scalar system */
+  int index_bg_rho_lrs_F;            /**< for a long-range interaction, energy density in the fermions */
+  int index_bg_p_lrs_F;              /**< for a long-range interaction, pressure of the fermions */
+  int index_bg_pseudo_p_lrs_F;       /**< for a long-range interaction, pseudo-pressure (another statistical momentum useful for some equations) of the fermions */
+  int index_bg_phi_M_lrs;            /**< for a long-range interaction, scalar field times its vacuum mass (eV^2) */
+  int index_bg_phi_M_prime_lrs;      /**< for a long-range interaction, scalar field derivative wrt conformal time times its vacuum mass (eV^2/Mpc) */
+  int index_bg_MTsq_over_Msq_lrs;    /**< for a long-range interaction, scalar thermal mass squared over its vacuum mass squared*/
+  int index_bg_mT_over_T0_lrs;       /**< for a long-range interaction, effective fermion mass divided by its present temperature */
+  int index_bg_lrs_a_over_aunstable; /**< scale factor over scale factor of long-range adiabatic instability onset*/
 
   int index_bg_phi_scf;       /**< scalar field value */
   int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
@@ -327,9 +326,9 @@ struct background
   short has_idr;       /**< presence of interacting dark radiation? */
   short has_idm_dr;    /**< presence of dark matter interacting with dark radiation? */
   short has_curvature; /**< presence of global spatial curvature? */
-  short has_lrs;       /**< presence of long-range mediating scalar? */
-  short has_log10_lrs;   /**< lrs parameters set in log scale */
-  short has_lrs_nuggets; /**< consider lrs nugget formation */
+  short has_lrs;         /**< presence of scalar-mediated long-range interaction? */
+  short has_log10_lrs;   /**< long-range parameters inputted in log scale? */
+  short has_lrs_nuggets; /**< long-range instantaneous nugget formation considered */
 
   //@}
 
@@ -355,7 +354,7 @@ struct background
 
 
   /**
-   *@name - arrays related to sampling and integration of lrs phase space distributions
+   *@name - arrays related to sampling and integration of long-range interacting phase space distributions
    */
 
 
