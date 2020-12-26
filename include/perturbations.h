@@ -253,7 +253,7 @@ struct perturbs
   short has_source_delta_idr;   /**< do we need source for delta of interacting dark radiation? */
   short has_source_delta_idm_dr;/**< do we need source for delta of interacting dark matter (with dr)? */
   short has_source_delta_ncdm;  /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_delta_lrs;   /**< do we need source for fermion delta of scalar-mediated long range interaction? */
+  short has_source_delta_lrs_F;   /**< do we need source for fermion delta of scalar-mediated long range interaction? */
   short has_source_theta_m;     /**< do we need source for theta of total matter? */
   short has_source_theta_cb;    /**< do we ALSO need source for theta of ONLY cdm and baryon? */
   short has_source_theta_tot;   /**< do we need source for theta total? */
@@ -268,7 +268,7 @@ struct perturbs
   short has_source_theta_idr;   /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr;/**< do we need source for theta of interacting dark matter (with dr)? */
   short has_source_theta_ncdm;  /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_theta_lrs;   /**< do we need source for fermion theta of scalar-mediated long range interaction? */
+  short has_source_theta_lrs_F;   /**< do we need source for fermion theta of scalar-mediated long range interaction? */
   short has_source_phi;         /**< do we need source for metric fluctuation phi? */
   short has_source_phi_prime;   /**< do we need source for metric fluctuation phi'? */
   short has_source_phi_plus_psi;/**< do we need source for metric fluctuation (phi+psi)? */
@@ -302,7 +302,7 @@ struct perturbs
   int index_tp_delta_idr; /**< index value for delta of interacting dark radiation */
   int index_tp_delta_idm_dr;/**< index value for delta of interacting dark matter (with dr)*/
   int index_tp_delta_ncdm1; /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
-  int index_tp_delta_lrs; /**< index value for fermion delta of scalar-mediated long range interacting system */
+  int index_tp_delta_lrs_F; /**< index value for fermion delta of scalar-mediated long range interacting system */
   int index_tp_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_tp_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
 
@@ -320,7 +320,7 @@ struct perturbs
   int index_tp_theta_idm_dr;/**< index value for theta of interacting dark matter (with dr)*/
   int index_tp_theta_dr;    /**< index value for F1 of decay radiation */
   int index_tp_theta_ncdm1; /**< index value for theta of first non-cold dark matter species (e.g. massive neutrinos) */
-  int index_tp_theta_lrs;   /**< index value for fermion theta of scalar-mediated long range interacting system */
+  int index_tp_theta_lrs_F;   /**< index value for fermion theta of scalar-mediated long range interacting system */
 
   int index_tp_phi;          /**< index value for metric fluctuation phi */
   int index_tp_phi_prime;    /**< index value for metric fluctuation phi' */

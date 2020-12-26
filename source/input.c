@@ -1248,85 +1248,78 @@ int input_read_parameters(
   else if (pba->K < 0.) pba->sgnK = -1;
 
   /** - Long range interaction parameters */
-  class_call(parser_read_string(pfc,
-				"longrangescalar",
-				&(string1),
-				&(flag1),
-				errmsg),
+  // Include long range interactions
+  class_call(parser_read_string(pfc,"longrangescalar",&string1,&flag1,errmsg),
 	     errmsg,
 	     errmsg);
+
   if ((flag1 == _TRUE_)) {
     if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
       pba->has_lrs = _TRUE_;
   }
 
-  class_call(parser_read_string(pfc,
-				"longrangescalar_phi_pt",
-				&(string1),
-				&(flag1),
-				errmsg),
-	     errmsg,
-	     errmsg);
-  if ((flag1 == _TRUE_)) {
-    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
-      ppt->has_lrs_phi_pt = _TRUE_;
-  }
+  if (pba->has_lrs == _TRUE_){
+    // Include scalar field perturbations
+    class_call(parser_read_string(pfc,"longrangescalar_phi_pt",&string1,&flag1,errmsg),
+	       errmsg,
+	       errmsg);
 
-  class_call(parser_read_string(pfc,
-				"longrangescalar_nuggets",
-				&(string1),
-				&(flag1),
-				errmsg),
-	     errmsg,
-	     errmsg);
-  if ((flag1 == _TRUE_)) {
-    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
-      pba->has_lrs_nuggets = _TRUE_;
-  }
+    if ((flag1 == _TRUE_)) {
+      if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+	ppt->has_lrs_phi_pt = _TRUE_;
+    }
 
-  class_call(parser_read_string(pfc,
-				"log10_lrs",
-				&(string1),
-				&(flag1),
-				errmsg),
-	     errmsg,
-	     errmsg);
-  if ((flag1 == _TRUE_)) {
-    if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
-      pba->has_log10_lrs = _TRUE_;
-  }
+    // Include instantaneous nugget formation
+    class_call(parser_read_string(pfc,"longrangescalar_nuggets",&string1,&flag1,errmsg),
+	       errmsg,
+	       errmsg);
 
-  if(pba->has_log10_lrs == _TRUE_){
-    double daux;
-    class_read_double("lrs_g_over_M",daux);
-    pba->lrs_g_over_M = pow(10.,daux);
-    class_read_double("lrs_M_phi",daux);
-    pba->lrs_M_phi = pow(10.,daux);
-    class_read_double("lrs_m_F", daux);
-    pba->lrs_m_F = pow(10.,daux);
-  }else{
-    class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
-    class_read_double("lrs_M_phi", pba->lrs_M_phi);
-    class_read_double("lrs_m_F", pba->lrs_m_F);
-  }
-  class_read_int("lrs_g_F",pba->lrs_g_F);
-  class_read_double("lrs_T_F",pba->lrs_T_F);
+    if ((flag1 == _TRUE_)) {
+      if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+	pba->has_lrs_nuggets = _TRUE_;
+    }
+
+    // Input coupling, scalar mass, and fermion mass in logarithmic scale
+    class_call(parser_read_string(pfc,"log10_lrs",&string1,&flag1,errmsg),
+	       errmsg,
+	       errmsg);
+
+    if ((flag1 == _TRUE_)) {
+      if ((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL))
+	pba->has_log10_lrs = _TRUE_;
+    }
+
+    if(pba->has_log10_lrs == _TRUE_){ // Read parameters in log scale
+      double daux;
+      class_read_double("lrs_g_over_M",daux);
+      pba->lrs_g_over_M = pow(10.,daux);
+      class_read_double("lrs_M_phi",daux);
+      pba->lrs_M_phi = pow(10.,daux);
+      class_read_double("lrs_m_F",daux);
+      pba->lrs_m_F = pow(10.,daux);
+    }else{
+      class_read_double("lrs_g_over_M", pba->lrs_g_over_M);
+      class_read_double("lrs_M_phi", pba->lrs_M_phi);
+      class_read_double("lrs_m_F",pba->lrs_m_F);
+    }
+    class_read_int("lrs_g_F",pba->lrs_g_F);
+    class_read_double("lrs_T_F",pba->lrs_T_F);
 
   
-  // Tolerance
-  if (ppt->gauge == synchronous)
-    ppr->tol_lrs = ppr->tol_lrs_synchronous;
-  if (ppt->gauge == newtonian)
-    ppr->tol_lrs = ppr->tol_lrs_newtonian;
-  // Quadrature modes, 0 is qm_auto
-  class_read_int("Quadrature strategy",pba->lrs_quadrature_strategy);
-  // Number of momentum bins
-  class_read_int("Number of momentum bins",pba->lrs_input_q_size);
-  // qmax, if relevant
-  class_read_double("Maximum q",pba->lrs_qmax);
+    // Tolerance
+    if (ppt->gauge == synchronous)
+      ppr->tol_lrs = ppr->tol_lrs_synchronous;
+    if (ppt->gauge == newtonian)
+      ppr->tol_lrs = ppr->tol_lrs_newtonian;
+    // Quadrature modes, 0 is qm_auto
+    class_read_int("Quadrature strategy",pba->lrs_quadrature_strategy);
+    // Number of momentum bins
+    class_read_int("Number of momentum bins",pba->lrs_input_q_size);
+    // qmax, if relevant
+    class_read_double("Maximum q",pba->lrs_qmax);
 
-  if (pba->has_lrs){
-    // Compute m_F over the *current* fermion temperature
+
+    // Compute the vacuum fermion mass over its *present day* temperature
     pba->lrs_m_F_over_T0 = pba->lrs_m_F * _eV_ / (_k_B_*pba->lrs_T_F*pba->T_cmb);
     
     // Init
@@ -1341,14 +1334,15 @@ int input_read_parameters(
     class_call(instabilityOnset_lrs(pba, &a_rel_unstable_lrs),
 	       pba->error_message,
 	       pba->error_message);
+
     if (pba->has_lrs_nuggets == _FALSE_ || 1 < a_rel_unstable_lrs){ // Stable
-      double phi_M_lrs; // Scalar field times mass [eV^2]
+      double phi_M_lrs; // Present day scalar field times its mass (eV^2)
       class_call(get_phi_M_lrs(pba, 0, &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message); 
       double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
 
-      double rho_F;
+      double rho_F; // Present day fermion energy density
       class_call(background_lrs_momenta(
 					pba->q_lrs_bg,
 					pba->w_lrs_bg,
@@ -1391,8 +1385,8 @@ int input_read_parameters(
 		 pba->error_message,
 		 pba->error_message);
 
-      double rho = (rho_phi + rho_F) / CUB(1 / a_rel_unstable_lrs);
-      pba->Omega0_lrs = rho/SQR(pba->H0);
+      double rho_lrs = (rho_phi + rho_F) / CUB(1 / a_rel_unstable_lrs); // Redshift the energy-density as dust
+      pba->Omega0_lrs = rho_lrs/SQR(pba->H0);
     }
 
     Omega_tot += pba->Omega0_lrs;
@@ -3090,7 +3084,7 @@ int input_read_parameters(
 
 
   if (ppt->has_tensors == _TRUE_) {
-    /** - ---> Include ur and ncdm shear in tensor computation? */
+    /** - ---> Include ur, ncdm and lrs shear in tensor computation? */
     class_call(parser_read_string(pfc,"tensor method",&string1,&flag1,errmsg),
                errmsg,
                errmsg);
@@ -3137,7 +3131,7 @@ int input_read_parameters(
                errmsg,
                "please choose different values for precision parameters dark_radiation_trigger_tau_over_tau_k and ncdm_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
   }
-  if (pba->lrs_g_over_M > 1e-10){
+  if (pba->has_lrs==_TRUE_){
     class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->radiation_streaming_trigger_tau_over_tau_k,
                errmsg,
                "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and radiation_streaming_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
@@ -3149,11 +3143,11 @@ int input_read_parameters(
     class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->ncdm_fluid_trigger_tau_over_tau_k,
                errmsg,
                "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and ncdm_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
+
     class_test(ppr->lrs_fluid_trigger_tau_over_tau_k==ppr->idr_streaming_trigger_tau_over_tau_k,
                errmsg,
                "please choose different values for precision parameters lrs_fluid_trigger_tau_over_tau_k and idr_fluid_trigger_tau_over_tau_k, in order to avoid switching two approximation schemes at the same time");
   }  
-
 
 
   /**
@@ -3464,6 +3458,7 @@ int input_default_params(
   //ppt->pk_only_cdm_bar=_FALSE_;
 
   ppt->has_lrs_phi_pt = _FALSE_;
+
   ppt->switch_sw = 1;
   ppt->switch_eisw = 1;
   ppt->switch_lisw = 1;

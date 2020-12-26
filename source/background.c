@@ -283,7 +283,7 @@ int background_functions(
   double dp_dloga;
   /* lrs quantities */
   double T_lrs, I1_lrs, I2_lrs, a_rel_unstable_lrs;
-  
+
   /** - initialize local variables */
   a = pvecback_B[pba->index_bi_a];
   rho_tot = 0.;
@@ -428,11 +428,10 @@ int background_functions(
     dp_dloga += (a*dw_over_da-3*(1+w_fld)*w_fld)*pvecback[pba->index_bg_rho_fld];
   }
 
-  /* scalar mediating long range interactions */
-  /* We will also include the fermion energy density */
+  /* Scalar-mediated long range interacting fermion */
   if (pba->has_lrs == _TRUE_) {
     /* Compute scalar field and effective fermion mass */
-    double phi_M_lrs; // Scalar field times mass [eV^2]
+    double phi_M_lrs; // Scalar field times its mass (eV^2)
     class_call(get_phi_M_lrs(pba, 1./a_rel-1., &phi_M_lrs),
 	       pba->error_message,
 	       pba->error_message);
@@ -448,7 +447,8 @@ int background_functions(
       pvecback[pba->index_bg_phi_M_lrs] = phi_M_lrs;
       pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0_lrs;
 
-      /* Scalar quantitites */
+      /* Scalar quantitites. 
+         Since we are always in the limit M>>H, we don't consider time derivatives */
       double rho_phi = _eV4_to_rho_class * 0.5 * SQR(phi_M_lrs);
       double p_phi = -rho_phi;
 
@@ -472,11 +472,14 @@ int background_functions(
       pvecback[pba->index_bg_rho_lrs_F] = rho_F;
       pvecback[pba->index_bg_p_lrs_F] = p_F;
     
-      pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;    /* Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935 */
+      //Introduce the pseudo-pressure (necessary for perturbations), see arXiv:1104.2935
+      pvecback[pba->index_bg_pseudo_p_lrs_F] = pseudo_p_F;
 
-      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
+      // Fermion temperature (eV)
+      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_; 
 
-      pvecback[pba->index_bg_MTsq_over_Msq_lrs] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs; // Scalar thermal mass squared over vacuum mass squared
+      // Scalar thermal mass squared over its vacuum mass squared
+      pvecback[pba->index_bg_MTsq_over_Msq_lrs] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs; 
 
       /* Add up scalar and fermion */
       pvecback[pba->index_bg_rho_lrs] = rho_phi + rho_F;
@@ -484,14 +487,15 @@ int background_functions(
     
       rho_tot += pvecback[pba->index_bg_rho_lrs];
       p_tot += pvecback[pba->index_bg_p_lrs];
+
       /* Define the relativistic and non-relativistic contributions of fermions to rho as in ncdm */
       rho_r += 3.* p_F;
       rho_m += rho_F - 3.* p_F;
 
       dp_dloga += pseudo_p_F - 5*p_F; // Fermion contribution
       dp_dloga += 1./3. * SQR(SQR(pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_)) * _J4_to_rho_class * // T^4, in rho_class units
-	SQR(pba->lrs_g_over_M * T_lrs * I1_lrs) / // (g/M * T * I_1)^2, internally everything in eV
-	(1 + SQR(pba->lrs_g_over_M * T_lrs) * I2_lrs); // 1+(g/M * T)^2 * I_2, internally everything in eV
+	SQR(pba->lrs_g_over_M * T_lrs * I1_lrs) / // (g/M * T * I_1)^2, dimensionless but internally everything in eV
+	(1 + SQR(pba->lrs_g_over_M * T_lrs) * I2_lrs); // 1+(g/M * T)^2 * I_2, dimensionles but internally everything in eV
     } else { // Unstable: nuggets have formed
       /* Compute the scalar thermal mass as if no nugget condensation had taken place.
 	 This is to make M_T diminish faster than H, necessary for the proper behaviour of
@@ -511,7 +515,10 @@ int background_functions(
 					&I2_lrs),
 		 pba->error_message,
 		 pba->error_message);
-      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;//T in electronvolt
+
+      // Fermion temperature (eV)
+      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel*_k_B_/_eV_;
+
       pvecback[pba->index_bg_MTsq_over_Msq_lrs] = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs;
       
       // Compute the total energy density at the stable-unstable transition
@@ -537,18 +544,17 @@ int background_functions(
 		 pba->error_message,
 		 pba->error_message);
 
-      // Add a CDM-like component
+      // After nugget formation, the system behaves as dust
       pvecback[pba->index_bg_phi_M_lrs] = 0.;
       pvecback[pba->index_bg_p_lrs_F] = 0.;
       pvecback[pba->index_bg_pseudo_p_lrs_F] = 0.;
       pvecback[pba->index_bg_p_lrs] = 0.;
 
-      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0_lrs; // Keep this quantity frozen at instability onset to properly get the nugget density perturbations when switching approximations (L5921 in perturbations.c)
+      pvecback[pba->index_bg_mT_over_T0_lrs] = mT_over_T0_lrs; // Keep this quantity frozen at instability onset, so that the computed density perturbations are continuous
       pvecback[pba->index_bg_rho_lrs_F] = (rho_phi + rho_F) / CUB(a_rel / a_rel_unstable_lrs);
       pvecback[pba->index_bg_rho_lrs] = pvecback[pba->index_bg_rho_lrs_F];
 
       rho_tot += pvecback[pba->index_bg_rho_lrs];
-      p_tot += pvecback[pba->index_bg_p_lrs];
       rho_m += pvecback[pba->index_bg_rho_lrs];
     }
   }
@@ -604,16 +610,16 @@ int background_functions(
 
   /* lrs-related quantities that depend on H */
   if (pba->has_lrs ==_TRUE_){
-    /* phi_M_prime */
+    /* phi_M_prime: scalar derivative wrt conformal time times its mass */
     if( (pba->has_lrs_nuggets == _TRUE_ && a_rel > a_rel_unstable_lrs) // Unstable, or...
-	|| SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_MTsq_over_Msq_lrs]) / SQR(pvecback[pba->index_bg_H]) <= 1. // This is to avoid the term hdot phidot oversourcing the perturbations. See e-mail on 28th of July
+	|| SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + pvecback[pba->index_bg_MTsq_over_Msq_lrs]) / SQR(pvecback[pba->index_bg_H]) <= 1. // This is to avoid the term hdot phidot oversourcing the perturbations in the (uninteresting) regime where M < H
 	) 
       pvecback[pba->index_bg_phi_M_prime_lrs] = 0.;
     else      
       pvecback[pba->index_bg_phi_M_prime_lrs] =
-	pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // Mphidot_over_H [eV^2]
-	pvecback[pba->index_bg_H]* // Mphidot [eV^2/Mpc]
-	a_rel; //Mphiprime [eV^2/Mpc]
+	pba->lrs_g_over_M*pow(T_lrs,3)*I1_lrs/(1+SQR(pba->lrs_g_over_M)*SQR(T_lrs)*I2_lrs)* // phi_M_dot_over_H (eV^2)
+	pvecback[pba->index_bg_H]* // phi_M_dot (eV^2/Mpc)
+	a_rel; //phi_M_prime (eV^2/Mpc)
 
     /* Check that M >> H */
     if( (pba->has_lrs_nuggets == _FALSE_ || a_rel < a_rel_unstable_lrs) // Stable, and...
@@ -641,12 +647,14 @@ int background_functions(
 					&I2_lrs),
 		 pba->error_message,
 		 pba->error_message);
-      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel_unstable_lrs*_k_B_/_eV_;//T in electronvolt
+      // Fermion temperature (eV)
+      T_lrs = pba->T_cmb*pba->lrs_T_F/a_rel_unstable_lrs*_k_B_/_eV_;
+      // Scalar thermal mass squared over its vacuum mass squared
       double MTsq_over_Msq = SQR(pba->lrs_g_over_M) * SQR(T_lrs) * I2_lrs;
       
       class_test(SQR(pba->lrs_M_phi * _Mpc_times_eV) * (1 + MTsq_over_Msq) / SQR(pvecback[pba->index_bg_H]) <= 1e10,
 		 pba->error_message,
-		 "lrs: You chose to simulate nugget formation, but for this scalar mass they don't form instantaneously");
+		 "lrs: You chose to treat nugget formation as instantaneous, but for this scalar mass they don't form instantaneously");
     }
   }
 
@@ -658,7 +666,7 @@ int background_functions(
 
   /** - compute relativistic density to total density ratio */
   pvecback[pba->index_bg_Omega_r] = rho_r / rho_crit;
-  
+
   /** - compute other quantities in the exhaustive, redundant format */
   if (return_format == pba->long_info) {
 
@@ -865,39 +873,41 @@ int background_init(
         printf(" -> dark radiation Delta Neff %e\n",N_dark);
       }
 
-      double rho_F_rel;
-      /* contribution of lrs to N_eff */
-      /* call this function to get rho_F */
-      background_ncdm_momenta(pba->q_lrs_bg,
-			      pba->w_lrs_bg,
-			      pba->q_size_lrs_bg,
-			      0.,
-			      pba->factor_lrs,
-			      0.,
-			      NULL,
-			      &rho_F_rel,
-			      NULL,
-			      NULL,
-			      NULL);
+      if (pba->has_lrs==_TRUE_){
+        double rho_F_rel;
+        /* contribution of long range interacting fermion to N_eff */
+        /* call this function to get rho_F */
+        background_ncdm_momenta(pba->q_lrs_bg,
+	  		        pba->w_lrs_bg,
+			        pba->q_size_lrs_bg,
+			        0.,
+			        pba->factor_lrs,
+			        0.,
+			        NULL,
+			        &rho_F_rel,
+			        NULL,
+			        NULL,
+			        NULL);
 
-      /* inform user of the contribution of each species to
-	 radiation density (in relativistic limit): should be
-	 between 1.01 and 1.02 for each active neutrino species;
-	 evaluated as rho_F/rho_nu_rel where rho_nu_rel is the
-	 density of one neutrino in the instantaneous decoupling
-	 limit, i.e. assuming T_nu=(4/11)^1/3 T_gamma (this comes
-	 from the definition of N_eff) */
-      rho_nu_rel = 56.0/45.0*pow(_PI_,6)*pow(4.0/11.0,4.0/3.0)*_G_/pow(_h_P_,3)/pow(_c_,7)*
-	pow(_Mpc_over_m_,2)*pow(pba->T_cmb*_k_B_,4);
+        /* inform user of the contribution to
+  	   radiation density (in relativistic limit): should be
+	   between 1.01 and 1.02 for each active neutrino species;
+	   evaluated as rho_F/rho_nu_rel where rho_nu_rel is the
+	   density of one neutrino in the instantaneous decoupling
+	   limit, i.e. assuming T_nu=(4/11)^1/3 T_gamma (this comes
+	   from the definition of N_eff) */
+        rho_nu_rel = 56.0/45.0*pow(_PI_,6)*pow(4.0/11.0,4.0/3.0)*_G_/pow(_h_P_,3)/pow(_c_,7)*
+	  pow(_Mpc_over_m_,2)*pow(pba->T_cmb*_k_B_,4);
 
-      printf(" -> long-range interacting fermion sampled with %d (resp. %d) points for purpose of background (resp. perturbation) integration. In the relativistic limit it gives Delta N_eff = %g\n",
-	     pba->q_size_lrs_bg,
-	     pba->q_size_lrs,
-	     rho_F_rel/rho_nu_rel);
+        printf(" -> long-range interacting fermion sampled with %d (resp. %d) points for purpose of background (resp. perturbation) integration. In the relativistic limit it gives Delta N_eff = %g\n",
+	       pba->q_size_lrs_bg,
+	       pba->q_size_lrs,
+	       rho_F_rel/rho_nu_rel);
 
-      Neff += rho_F_rel/rho_nu_rel;
+        Neff += rho_F_rel/rho_nu_rel;
+      }
 
-      printf(" -> total N_eff = %g (sumed over ultra-relativistic species, ncdm, dark radiation and long-range interacting fermions)\n",Neff);
+      printf(" -> total N_eff = %g (sumed over ultra-relativistic species, ncdm, dark radiation and long range interacting fermions)\n",Neff);
     }
   }
 
@@ -1097,7 +1107,6 @@ int background_indices(
   pba->has_scf = _FALSE_;
   pba->has_lambda = _FALSE_;
   pba->has_fld = _FALSE_;
-  //pba->has_lrs = _FALSE_;
   pba->has_ur = _FALSE_;
   pba->has_idr = _FALSE_;
   pba->has_idm_dr = _FALSE_;
@@ -1193,11 +1202,11 @@ int background_indices(
   class_define_index(pba->index_bg_rho_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_rho_lrs_F,pba->has_lrs,index_bg,1);
-  class_define_index(pba->index_bg_phi_M_prime_lrs,pba->has_lrs,index_bg,1);
-  class_define_index(pba->index_bg_MTsq_over_Msq_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_pseudo_p_lrs_F,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_phi_M_lrs,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_phi_M_prime_lrs,pba->has_lrs,index_bg,1);
+  class_define_index(pba->index_bg_MTsq_over_Msq_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_mT_over_T0_lrs,pba->has_lrs,index_bg,1);
   class_define_index(pba->index_bg_lrs_a_over_aunstable,pba->has_lrs,index_bg,1);
 
@@ -2253,7 +2262,7 @@ int background_initial_conditions(
       is_early_enough = _TRUE_;
       rho_lrs_rel_tot = 0.;
 
-      double phi_M_lrs; // Scalar field times mass [eV^2]
+      double phi_M_lrs; // Scalar field times its mass (eV^2)
       class_call(get_phi_M_lrs(pba, pba->a_today/a-1.0, &phi_M_lrs),
 		 pba->error_message,
 		 pba->error_message); 
@@ -2283,7 +2292,7 @@ int background_initial_conditions(
     }
     class_test(counter == _MAX_IT_,
                pba->error_message,
-               "Search for initial scale factor a such that all long-range interacting species are relativistic failed.");
+               "Search for initial scale factor a such that long-range interacting species is relativistic failed.");
   }
 
   pvecback_integration[pba->index_bi_a] = a;
@@ -2954,7 +2963,7 @@ int background_output_budget(
       budget_other+=pba->Omega0_k;
     }
     if(pba->has_lrs){
-      _class_print_species_("Scalar mediating long range self-interaction",fld);
+      _class_print_species_("Scalar-mediated long range interacting fermion",fld);
       budget_other+=pba->Omega0_lrs;
     }
 

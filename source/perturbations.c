@@ -27,8 +27,6 @@
 #include "perturbations.h"
 #include "longrange.h"
 
-//#define JORDBG
-
 /**
  * Source function \f$ S^{X} (k, \tau) \f$ at a given conformal time tau.
  *
@@ -238,7 +236,7 @@ int perturb_output_data(
               class_store_double(dataptr,tk[ppt->index_tp_delta_ncdm1+n_ncdm],ppt->has_source_delta_ncdm,storeidx);
             }
           }
-          class_store_double(dataptr,tk[ppt->index_tp_delta_lrs],ppt->has_source_delta_lrs,storeidx);
+          class_store_double(dataptr,tk[ppt->index_tp_delta_lrs_F],ppt->has_source_delta_lrs_F,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_dcdm],ppt->has_source_delta_dcdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_dr],ppt->has_source_delta_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_scf],ppt->has_source_delta_scf,storeidx);
@@ -267,7 +265,7 @@ int perturb_output_data(
               class_store_double(dataptr,tk[ppt->index_tp_theta_ncdm1+n_ncdm],ppt->has_source_theta_ncdm,storeidx);
             }
           }
-          class_store_double(dataptr,tk[ppt->index_tp_theta_lrs],ppt->has_source_theta_lrs,storeidx);
+          class_store_double(dataptr,tk[ppt->index_tp_theta_lrs_F],ppt->has_source_theta_lrs_F,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_dcdm],ppt->has_source_theta_dcdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_dr],ppt->has_source_theta_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_scf],ppt->has_source_theta_scf,storeidx);
@@ -286,7 +284,7 @@ int perturb_output_data(
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_ur]/k2,ppt->has_source_delta_ur,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_idr]/k2,ppt->has_source_delta_idr,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_ncdm1]/k2,ppt->has_source_delta_ncdm,storeidx,0.0);
-        class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_lrs]/k2,ppt->has_source_delta_lrs,storeidx,0.0);
+        class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_lrs_F]/k2,ppt->has_source_delta_lrs_F,storeidx,0.0);
         class_store_double_or_default(dataptr,-tk[ppt->index_tp_delta_tot]/k2,_TRUE_,storeidx,0.0);
       }
     }
@@ -335,7 +333,7 @@ int perturb_output_titles(
           class_store_columntitle(titles,tmp,_TRUE_);
         }
       }
-      class_store_columntitle(titles,"d_lrs",pba->has_lrs);
+      class_store_columntitle(titles,"d_lrs_F",pba->has_lrs);
       class_store_columntitle(titles,"d_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"d_dr",pba->has_dr);
       class_store_columntitle(titles,"d_scf",pba->has_scf);
@@ -365,7 +363,7 @@ int perturb_output_titles(
           class_store_columntitle(titles,tmp,_TRUE_);
         }
       }
-      class_store_columntitle(titles,"t_lrs",pba->has_lrs);
+      class_store_columntitle(titles,"t_lrs_F",pba->has_lrs);
       class_store_columntitle(titles,"t_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"t_dr",pba->has_dr);
       class_store_columntitle(titles,"t__scf",pba->has_scf);
@@ -383,7 +381,7 @@ int perturb_output_titles(
     class_store_columntitle(titles,"-T_ur/k2",_TRUE_);
     class_store_columntitle(titles,"-T_idr/k2",_TRUE_);
     class_store_columntitle(titles,"-T_ncdm/k2",_TRUE_);
-    class_store_columntitle(titles,"-T_lrs/k2",_TRUE_);
+    class_store_columntitle(titles,"-T_lrs_F/k2",_TRUE_);
     class_store_columntitle(titles,"-T_tot/k2",_TRUE_);
 
   }
@@ -640,7 +638,7 @@ int perturb_init(
       if (pba->has_ncdm == _TRUE_)
         ppt->evolve_tensor_ncdm = _TRUE_;
       if (pba->has_lrs == _TRUE_)
-        ppt->evolve_tensor_lrs = _TRUE_;
+        ppt->evolve_tensor_lrs = _TRUE_; // We have *NOT* implemented long-range interactions in tensor perturbations
       break;
     }
   }
@@ -795,7 +793,7 @@ int perturb_init(
 #ifdef _OPENMP
           tstart = omp_get_wtime();
 #endif
-          
+
           class_call_parallel(perturb_solve(ppr,
                                             pba,
                                             pth,
@@ -1075,7 +1073,7 @@ int perturb_indices_of_perturbs(
   ppt->has_source_delta_idr = _FALSE_;
   ppt->has_source_delta_idm_dr = _FALSE_;
   ppt->has_source_delta_ncdm = _FALSE_;
-  ppt->has_source_delta_lrs = _FALSE_;
+  ppt->has_source_delta_lrs_F = _FALSE_;
   ppt->has_source_theta_m = _FALSE_;
   ppt->has_source_theta_cb = _FALSE_;
   ppt->has_source_theta_tot = _FALSE_;
@@ -1090,7 +1088,7 @@ int perturb_indices_of_perturbs(
   ppt->has_source_theta_idr = _FALSE_;
   ppt->has_source_theta_idm_dr = _FALSE_;
   ppt->has_source_theta_ncdm = _FALSE_;
-  ppt->has_source_theta_lrs = _FALSE_;
+  ppt->has_source_theta_lrs_F = _FALSE_;
   ppt->has_source_phi = _FALSE_;
   ppt->has_source_phi_prime = _FALSE_;
   ppt->has_source_phi_plus_psi = _FALSE_;
@@ -1188,7 +1186,7 @@ int perturb_indices_of_perturbs(
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_delta_ncdm = _TRUE_;
         if (pba->has_lrs == _TRUE_)
-          ppt->has_source_delta_lrs = _TRUE_;
+          ppt->has_source_delta_lrs_F = _TRUE_;
         // Thanks to the following lines, (phi,psi) are also stored as sources
         // (Obtained directly in newtonian gauge, infereed from (h,eta) in synchronous gauge).
         // If density transfer functions are requested in the (default) CLASS format,
@@ -1221,7 +1219,7 @@ int perturb_indices_of_perturbs(
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_theta_ncdm = _TRUE_;
         if (pba->has_lrs == _TRUE_)
-          ppt->has_source_theta_lrs = _TRUE_;
+          ppt->has_source_theta_lrs_F = _TRUE_;
       }
 
       if (ppt->has_cl_number_count == _TRUE_) {
@@ -1292,7 +1290,7 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_delta_idr,  ppt->has_source_delta_idr, index_type,1);
       class_define_index(ppt->index_tp_delta_idm_dr,  ppt->has_source_delta_idm_dr, index_type,1);
       class_define_index(ppt->index_tp_delta_ncdm1,ppt->has_source_delta_ncdm,index_type,pba->N_ncdm);
-      class_define_index(ppt->index_tp_delta_lrs,  ppt->has_source_delta_lrs,  index_type,1);
+      class_define_index(ppt->index_tp_delta_lrs_F,  ppt->has_source_delta_lrs_F,  index_type,1);
       class_define_index(ppt->index_tp_theta_m,    ppt->has_source_theta_m,   index_type,1);
       class_define_index(ppt->index_tp_theta_cb,   ppt->has_source_theta_cb,  index_type,1);
       class_define_index(ppt->index_tp_theta_tot,  ppt->has_source_theta_tot, index_type,1);
@@ -1307,7 +1305,7 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_theta_idr,  ppt->has_source_theta_idr, index_type,1);
       class_define_index(ppt->index_tp_theta_idm_dr,  ppt->has_source_theta_idm_dr, index_type,1);
       class_define_index(ppt->index_tp_theta_ncdm1,ppt->has_source_theta_ncdm,index_type,pba->N_ncdm);
-      class_define_index(ppt->index_tp_theta_lrs,  ppt->has_source_theta_lrs,  index_type,1);
+      class_define_index(ppt->index_tp_theta_lrs_F,  ppt->has_source_theta_lrs_F,  index_type,1);
       class_define_index(ppt->index_tp_phi,        ppt->has_source_phi,       index_type,1);
       class_define_index(ppt->index_tp_phi_prime,  ppt->has_source_phi_prime, index_type,1);
       class_define_index(ppt->index_tp_phi_plus_psi,ppt->has_source_phi_plus_psi,index_type,1);
@@ -2528,7 +2526,7 @@ int perturb_workspace_init(
     ppw->max_l_max = MAX(ppr->l_max_g_ten, ppr->l_max_pol_g_ten);
     if (pba->has_ur == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_ur);
     if (pba->has_ncdm == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_ncdm);
-    if (pba->has_lrs == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs);
+    if (pba->has_lrs == _TRUE_) ppw->max_l_max = MAX(ppw->max_l_max, ppr->l_max_lrs); // We have *NOT* implemented long-range interactions in tensor perturbations
   }
 
   /** - Allocate \f$ s_l\f$[ ] array for freestreaming of multipoles (see arXiv:1305.3261) and initialize
@@ -2564,6 +2562,7 @@ int perturb_workspace_init(
       class_define_index(ppw->index_mt_eta_prime,_TRUE_,index_mt,1);     /* eta' */
       class_define_index(ppw->index_mt_alpha,_TRUE_,index_mt,1);         /* alpha = (h' + 6 tau') / (2 k**2) */
       class_define_index(ppw->index_mt_alpha_prime,_TRUE_,index_mt,1);   /* alpha' */
+
     }
 
   }
@@ -2661,6 +2660,7 @@ int perturb_workspace_init(
 
     ppw->approx[ppw->index_ap_tca]=(int)tca_on;
     ppw->approx[ppw->index_ap_rsa]=(int)rsa_off;
+    // We have *NOT* implemented long-range interactions in tensor perturbations
   }
 
   /** - allocate fields where some of the perturbations are stored */
@@ -3265,6 +3265,7 @@ int perturb_prepare_k_output(struct background * pba,
       }
 
       if (ppt->evolve_tensor_lrs == _TRUE_) {
+	// We have *NOT* implemented long-range interactions in tensor perturbations
         class_store_columntitle(ppt->tensor_titles,"delta_lrs_F",_TRUE_);
         class_store_columntitle(ppt->tensor_titles,"theta_lrs_F",_TRUE_);
         class_store_columntitle(ppt->tensor_titles,"shear_lrs_F",_TRUE_);
@@ -3615,6 +3616,7 @@ int perturb_find_approximation_switches(
               fprintf(stdout,"Mode k=%e: will switch on ncdm fluid approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
           }
+
           if (pba->has_lrs == _TRUE_) {
             if ((interval_approx[index_switch-1][ppw->index_ap_lrsfa]==(int)lrsfa_off) &&
                 (interval_approx[index_switch][ppw->index_ap_lrsfa]==(int)lrsfa_on)) {
@@ -3640,7 +3642,6 @@ int perturb_find_approximation_switches(
             }
           }
         }
-        
 
         if (_tensors_) {
 
@@ -3652,6 +3653,7 @@ int perturb_find_approximation_switches(
               (interval_approx[index_switch][ppw->index_ap_rsa]==(int)rsa_on))
             fprintf(stdout,"Mode k=%e: will switch on radiation streaming approximation for tensors at tau=%e\n",k,interval_limit[index_switch]);
 
+	  // We have *NOT* implemented long-range interactions in tensor perturbations
         }
       }
     }
@@ -3786,9 +3788,7 @@ int perturb_vector_init(
     }
 
     /* photons */
-    #ifdef JORDBG
-    printf("index photonsb: %d\n", index_pt);
-    #endif
+
     if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) { /* if radiation streaming approximation is off */
 
       /* temperature */
@@ -3813,28 +3813,17 @@ int perturb_vector_init(
         class_define_index(ppv->index_pt_pol3_g,_TRUE_,index_pt,ppv->l_max_pol_g-2);
       }
     }
-#ifdef JORDBG
-    printf("index photonsa: %d\n", index_pt);
-#endif
-  
+
     /* baryons */
-#ifdef JORDBG
-  printf("index baryonsb: %d\n", index_pt);
-#endif
-  class_define_index(ppv->index_pt_delta_b,_TRUE_,index_pt,1); /* baryon density */
+
+    class_define_index(ppv->index_pt_delta_b,_TRUE_,index_pt,1); /* baryon density */
     class_define_index(ppv->index_pt_theta_b,_TRUE_,index_pt,1); /* baryon velocity */
-#ifdef JORDBG
-    printf("index baryonsa: %d\n", index_pt);
-#endif
+
     /* cdm */
-#ifdef JORDBG
-    printf("index cdmb: %d\n", index_pt);
-#endif
+
     class_define_index(ppv->index_pt_delta_cdm,pba->has_cdm,index_pt,1); /* cdm density */
     class_define_index(ppv->index_pt_theta_cdm,pba->has_cdm && (ppt->gauge == newtonian),index_pt,1); /* cdm velocity */
-#ifdef JORDBG
-    printf("index cdma: %d\n", index_pt);
-#endif
+
     /* idm_dr */
     class_define_index(ppv->index_pt_delta_idm_dr,pba->has_idm_dr,index_pt,1); /* idm_dr density */
     class_define_index(ppv->index_pt_theta_idm_dr,pba->has_idm_dr,index_pt,1); /* idm_dr velocity */
@@ -3903,9 +3892,7 @@ int perturb_vector_init(
 
 
     /* non-cold dark matter */
-#ifdef JORDBG
-    printf("index ncdmb: %d\n", index_pt);
-#endif
+
     if (pba->has_ncdm == _TRUE_) {
       ppv->index_pt_psi0_ncdm1 = index_pt; /* density of ultra-relativistic neutrinos/relics */
       ppv->N_ncdm = pba->N_ncdm;
@@ -3931,33 +3918,19 @@ int perturb_vector_init(
         index_pt += (ppv->l_max_ncdm[n_ncdm]+1)*ppv->q_size_ncdm[n_ncdm];
       }
     }
-#ifdef JORDBG
-    printf("index ncdma: %d\n", index_pt);
-#endif
-    
-#ifdef JORDBG
-    printf("index lrsb: %d\n", index_pt);
-#endif
+
+    /* scalar-mediated long range interacting fermion */
+
     if (pba->has_lrs == _TRUE_) {
-      /* lrs field equation */
       if(ppt->has_lrs_phi_pt == _TRUE_){
         if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
 	   && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
-#ifdef JORDBG
-          printf("index lrsptb: %d\n", index_pt);
-#endif
-          class_define_index(ppv->index_pt_phi_M_lrs,ppt->has_lrs_phi_pt,index_pt,1);       /* M*delta_phi*/
-          class_define_index(ppv->index_pt_phi_M_prime_lrs,ppt->has_lrs_phi_pt,index_pt,1); /* M*delta_phi'*/
-#ifdef JORDBG
-          printf("index lrspta: %d\n", index_pt);
-#endif
-
+          class_define_index(ppv->index_pt_phi_M_lrs,ppt->has_lrs_phi_pt,index_pt,1);       /* M*delta_phi */
+          class_define_index(ppv->index_pt_phi_M_prime_lrs,ppt->has_lrs_phi_pt,index_pt,1); /* M*delta_phi' */
         }
       }
       
-      /* Scalar-mediated long range interaction */
-      
-      ppv->index_pt_psi0_lrs = index_pt; /* density of ultra-relativistic neutrinos/relics */
+      ppv->index_pt_psi0_lrs = index_pt; /* density of fermions */
       
       // Set value of ppv->l_max_lrs:
       if(pba->has_lrs_nuggets == _TRUE_ && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on){
@@ -3965,7 +3938,7 @@ int perturb_vector_init(
 	ppv->l_max_lrs = 1;
 	ppv->q_size_lrs = 1;
       } else if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_off){
-        /* reject inconsistent values of the number of mutipoles in ultra relativistic neutrino hierarchy */
+        /* reject inconsistent values of the number of mutipoles in ultra relativistic fermion hierarchy */
         class_test(ppr->l_max_lrs < 4,
                    ppt->error_message,
                    "ppr->l_max_lrs should be at least 4, i.e. we must integrate at least over first four momenta of lrs perturbed phase-space distribution");
@@ -3980,16 +3953,10 @@ int perturb_vector_init(
       }
       index_pt += (ppv->l_max_lrs+1)*ppv->q_size_lrs;
     }
-#ifdef JORDBG
-    printf("index lrsa: %d\n", index_pt);
-#endif
-    
+   
     /* metric (only quantities to be integrated, not those obeying constraint equations) */
 
     /* metric perturbation eta of synchronous gauge */
-#ifdef JORDBG
-    printf("index etaphib: %d\n", index_pt);
-#endif
     class_define_index(ppv->index_pt_eta,ppt->gauge == synchronous,index_pt,1);
 
     /* metric perturbation phi of newtonian gauge ( we could fix it
@@ -3997,11 +3964,8 @@ int perturb_vector_init(
        integration is numerically more stable if we actually evolve
        phi) */
     class_define_index(ppv->index_pt_phi,ppt->gauge == newtonian,index_pt,1);
-#ifdef JORDBG
-    printf("index etaphia: %d\n", index_pt);
-#endif
-}
 
+  }
 
   if (_vectors_) {
 
@@ -4098,6 +4062,7 @@ int perturb_vector_init(
     }
 
     if (ppt->evolve_tensor_lrs == _TRUE_) {
+      // We have *NOT* implemented long-range interactions in tensor perturbations
       ppv->index_pt_psi0_lrs = index_pt;
 
       // Set value of ppv->l_max_lrs:
@@ -4212,8 +4177,10 @@ int perturb_vector_init(
     }
 
     if (pba->has_lrs == _TRUE_) {
+
       /* we don't need ncdm multipoles above l=2 (but they are
          defined only when lrsfa is off) */
+
       index_pt = ppv->index_pt_psi0_lrs;
       for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
           for(l=0; l<=ppv->l_max_lrs; l++){
@@ -4344,13 +4311,13 @@ int perturb_vector_init(
                ppt->error_message);
 
   }
-  
+
   /** - case of switching approximation while a wavenumber is being integrated */
-  
-  else{
+
+  else {
 
     /** - --> (a) for the scalar mode: */
-    
+
     if (_scalars_) {
 
       /** - ---> (a.1.) check that the change of approximation scheme makes
@@ -4774,8 +4741,7 @@ int perturb_vector_init(
               ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
               ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
             }
-          }
-          
+          }          
         }
       }
 
@@ -4882,13 +4848,14 @@ int perturb_vector_init(
                 index_pt++;
               }
             }
-          }
-          if (ppt->has_lrs_phi_pt == _TRUE_)
+
+            if (ppt->has_lrs_phi_pt == _TRUE_)
             if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
 	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
               ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
             }
+          }
         }
       }
 
@@ -5005,21 +4972,21 @@ int perturb_vector_init(
             index_pt = 0;
             for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
               for(l=0; l<=ppv->l_max_lrs; l++){
-                /* This is correct with or withour lrsfa/lrsnug, since ppv->l_max_lrs and
+                /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
                    ppv->q_size_lrs is updated.*/
                 ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
                   ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
                 index_pt++;
               }
             }
+
             if (ppt->has_lrs_phi_pt == _TRUE_)
-              if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
-		 && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
-                ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
-                ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
-              }
-          }
-          
+            if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
+	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
+              ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
+              ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
+            }
+          }      
         }
       }
 
@@ -5167,27 +5134,30 @@ int perturb_vector_init(
             ppv->y[ppv->index_pt_psi0_ncdm1+ncdm_l_size*n_ncdm+1] *=k*factor/rho_plus_p_ncdm;
             ppv->y[ppv->index_pt_psi0_ncdm1+ncdm_l_size*n_ncdm+2] *=2.0/3.0*factor/rho_plus_p_ncdm;
           }
-        }
-
-        if (pba->has_lrs == _TRUE_) {
-          index_pt = 0;
-          for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
-            for(l=0; l<=ppv->l_max_lrs; l++){
-              /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
-                 ppv->q_size_lrs is updated.*/
-              ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
-                ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
-              index_pt++;
+        
+          if (pba->has_lrs == _TRUE_) {
+            index_pt = 0;
+            for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
+              for(l=0; l<=ppv->l_max_lrs; l++){
+                /* This is correct with or without lrsfa/lrsnug, since ppv->l_max_lrs and
+                   ppv->q_size_lrs is updated.*/
+                ppv->y[ppv->index_pt_psi0_lrs+index_pt] =
+                  ppw->pv->y[ppw->pv->index_pt_psi0_lrs+index_pt];
+                index_pt++;
+              }
             }
-          }
-          if (ppt->has_lrs_phi_pt == _TRUE_)
-            if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off  && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
+
+            if (ppt->has_lrs_phi_pt == _TRUE_)
+            if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
 	       && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
               ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
               ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
             }
+          }      
         }
       }
+
+      /* lrs approximations */
       
       if (pba->has_lrs == _TRUE_) {
         
@@ -5326,17 +5296,16 @@ int perturb_vector_init(
             ppw->pvecback[pba->index_bg_p_lrs_F];
           for(l=0; l<=2; l++){
             ppv->y[ppv->index_pt_psi0_lrs+l] = 0.0;
-          }
-	  
+          }	  
           factor = pba->factor_lrs*pow(pba->a_today/a,4);
-	  double delta_phi_M=0; // eV^2
+	  double delta_phi_M=0; // [eV]^2
 	  if (ppt->has_lrs_phi_pt == _TRUE_){
 	    if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off)
 	      delta_phi_M = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
 	    else
-	      delta_phi_M = ppw->delta_phi_M_lrsad; // (see L4465)
+	      delta_phi_M = ppw->delta_phi_M_lrsad; // (see L4432)
 	  }
-	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
 		
           for(index_q=0; index_q < ppw->pv->q_size_lrs; index_q++){
             // Integrate over distributions:
@@ -5362,13 +5331,12 @@ int perturb_vector_init(
           ppv->y[ppv->index_pt_psi0_lrs] *=factor/ppw->pvecback[pba->index_bg_rho_lrs_F];
           ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor/rho_plus_p_lrs;
           ppv->y[ppv->index_pt_psi0_lrs+2] *=2.0/3.0*factor/rho_plus_p_lrs;
-          
         }
       
-
 	/* -- case of switching on lrs adiabatic
 	   approximation. Provide correct initial conditions to new set
 	   of variables */
+
 	if(ppt->has_lrs_phi_pt==_TRUE_){
 	  if ((pa_old[ppw->index_ap_lrsad1] == (int)lrsad1_off && pa_old[ppw->index_ap_lrsad2] == (int)lrsad2_off) && (ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_on || ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_on)
 	      && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {  // Switch only if there are no nuggets
@@ -5504,6 +5472,7 @@ int perturb_vector_init(
 	/* -- case of switching off lrs adiabatic
 	   approximation. Provide correct initial conditions to new set
 	   of variables */
+
 	if(ppt->has_lrs_phi_pt==_TRUE_){
 	  if ((pa_old[ppw->index_ap_lrsad1] == (int)lrsad1_on || pa_old[ppw->index_ap_lrsad2] == (int)lrsad2_on) && (ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off)
 	      && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {  // Switch only if there are no nuggets
@@ -5634,8 +5603,8 @@ int perturb_vector_init(
 	      }
 	    }
           
-	    ppv->y[ppv->index_pt_phi_M_lrs] = ppw->delta_phi_M_lrsad; // (see L4465)
-	    ppv->y[ppv->index_pt_phi_M_prime_lrs] = 0; // (see L4465)
+	    ppv->y[ppv->index_pt_phi_M_lrs] = ppw->delta_phi_M_lrsad; // (see L4432)
+	    ppv->y[ppv->index_pt_phi_M_prime_lrs] = 0; // (see L4432)
 	  }
 	}
 
@@ -5646,6 +5615,7 @@ int perturb_vector_init(
 	   3)lrsadx switches while lrsnug is on
 	   4)lrsfa switches from off to on while lrsnug is on
 	   */
+
 	if( (ppt->has_lrs_phi_pt==_TRUE_ && (
 					 ((pa_old[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_on) && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_on) // Case 1
 					 ||
@@ -5789,7 +5759,10 @@ int perturb_vector_init(
           
 	}
 
-	/* -- case of switching on nugget approximation*/
+        /* -- case of switching on nugget approximation.
+           Provide correct initial conditions to new set
+           of variables */
+
 	if (pba->has_lrs_nuggets == _TRUE_ && pa_old[ppw->index_ap_lrsnug] == (int)lrsnug_off && ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_on) {
           
 	  if (ppt->perturbations_verbose>2)
@@ -5913,17 +5886,16 @@ int perturb_vector_init(
           
 	    for(l=0; l<=1; l++){
 	      ppv->y[ppv->index_pt_psi0_lrs+l] = 0.0;
-	    }
-	  
+	    }	  
 	    factor = pba->factor_lrs*pow(pba->a_today/a,4);
-	    double delta_phi_M=0; // eV^2
+	    double delta_phi_M=0; // [eV]^2
 	    if (ppt->has_lrs_phi_pt == _TRUE_){
 	      if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off)
 		delta_phi_M = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
 	      else
-		delta_phi_M = ppw->delta_phi_M_lrsad; // (see L4465)
+		delta_phi_M = ppw->delta_phi_M_lrsad; // (see L4432)
 	    }
-	    double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+	    double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
 		
 	    for(index_q=0; index_q < ppw->pv->q_size_lrs; index_q++){
 	      // Integrate over distributions:
@@ -5942,17 +5914,16 @@ int perturb_vector_init(
 	      //Jump to next momentum bin in ppw->pv->y:
 	      index_pt += (ppw->pv->l_max_lrs+1);
 	    }
-	    ppv->y[ppv->index_pt_psi0_lrs] *=factor; 
-	    ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor; 
+	    ppv->y[ppv->index_pt_psi0_lrs] *=factor; // For nuggets we store delta_rho, not delta_rho/rho. This ensures the continuity of the stress-energy tensor
+	    ppv->y[ppv->index_pt_psi0_lrs+1] *=k*factor; // For nuggets we store (rho+p)*theta, not theta. This ensures the continuity of the stress-energy tensor
           } else{
 	    ppv->y[ppv->index_pt_psi0_lrs + 0] =
-		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 0] * ppw->pvecback[pba->index_bg_rho_lrs_F]; // For nuggets, we keep delta_rho
+		  ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 0] * ppw->pvecback[pba->index_bg_rho_lrs_F]; // For nuggets we store delta_rho, not delta_rho/rho. This ensures the continuity of the stress-energy tensor 
 	    ppv->y[ppv->index_pt_psi0_lrs + 1] =
-	      ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 1] * (ppw->pvecback[pba->index_bg_rho_lrs_F] + ppw->pvecback[pba->index_bg_p_lrs_F]); // For nuggets, we keep (rho+p)*theta
+	      ppw->pv->y[ppw->pv->index_pt_psi0_lrs + 1] * (ppw->pvecback[pba->index_bg_rho_lrs_F] + ppw->pvecback[pba->index_bg_p_lrs_F]); // For nuggets we store (rho+p)*theta, not theta.  This ensures the continuity of the stress-energy tensor
 	  }
 	}
-      }
-      
+      }      
     }
 
     /** - --> (b) for the vector mode */
@@ -6016,6 +5987,8 @@ int perturb_vector_init(
           fprintf(stdout,"Mode k=%e: switch on radiation streaming approximation at tau=%e with Omega_r=%g\n",k,tau,ppw->pvecback[pba->index_bg_Omega_r]);
 
       }
+
+      // We have *NOT* implemented long-range interactions in vector perturbations
 
     }
 
@@ -6081,7 +6054,7 @@ int perturb_vector_init(
       }
 
       if (ppt->evolve_tensor_lrs == _TRUE_){
-
+        // We have *NOT* implemented long-range interactions in tensor perturbations
         index_pt = 0;
         for(index_q=0; index_q < ppv->q_size_lrs; index_q++){
           for(l=0; l<=ppv->l_max_lrs;l++){
@@ -6091,13 +6064,6 @@ int perturb_vector_init(
             index_pt++;
           }
         }
-
-        if(ppt->has_lrs_phi_pt ==_TRUE_)
-          if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off
-	     && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)) {
-            ppv->y[ppv->index_pt_phi_M_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_lrs];
-            ppv->y[ppv->index_pt_phi_M_prime_lrs] = ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs];
-          }
       }
 
       /* -- case of switching off tight coupling
@@ -6401,9 +6367,9 @@ int perturb_initial_conditions(struct precision * ppr,
       if(ppt->has_lrs_phi_pt == _TRUE_){
         if (ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off) {
 	  // Set the initial conditions at the potential minimum
-	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+	  double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
 	  double rhs = 0;
-	  double factor = pba->factor_lrs*pow(pba->a_today/a,4);
+	  double factor = pba->factor_lrs*pow(pba->a_today/a,4); // 4*pi*T_F^4 [rho_class]
 	  double q2;
 	  double a2 = a*a;
 	  for (index_q=0; index_q < ppw->pv->q_size_lrs; index_q ++) {
@@ -6420,9 +6386,8 @@ int perturb_initial_conditions(struct precision * ppr,
           ppw->pv->y[ppw->pv->index_pt_phi_M_prime_lrs] = 0.;
         }
       }
-
-      
-      /* all relativistic relics: ur, early ncdm, dr */
+  
+      /* all relativistic relics: ur, early ncdm, dr, lrs */
 
       if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_) || (pba->has_idr == _TRUE_) || (pba->has_lrs == _TRUE_)) {
 
@@ -7226,6 +7191,9 @@ int perturb_approximations(
     else {
       ppw->approx[ppw->index_ap_rsa] = (int)rsa_off;
     }
+
+    // We have *NOT* implemented long-range interactions in tensor perturbations
+
   }
 
   return _SUCCESS_;
@@ -8014,10 +7982,10 @@ int perturb_total_stress_energy(
     if (pba->has_lrs == _TRUE_) {
       // Background quantities
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
-      double phi_M_prime = ppw->pvecback[pba->index_bg_phi_M_prime_lrs]; // Background phi_prime [eV/Mpc]
-      double M_phi_dot_over_H = phi_M_prime / a_prime_over_a; // Background M_phi_dot/H [eV]
-      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
-      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+      double phi_M_prime = ppw->pvecback[pba->index_bg_phi_M_prime_lrs]; // Background phi*M_prime [eV/Mpc]
+      double phi_M_dot_over_H = phi_M_prime / a_prime_over_a; // Background phi*M_dot/H [eV]
+      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // [eV^-2]
+      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
       
       /* Scalar field perturbation */
       double delta_phi_M=0;
@@ -8035,9 +8003,9 @@ int perturb_total_stress_energy(
             pseudo_p_lrs = ppw->pvecback[pba->index_bg_pseudo_p_lrs_F];
             w_lrs = p_lrs_bg/rho_lrs_bg;
             
-            delta_phi_M = - rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs] * M_phi_dot_over_H * (1 + g_over_M_mT * phi_M) /
-              (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_M * M_phi_dot_over_H) / //-g/mT (deltarho-3deltap) [eV^3]
-              (k2/a2/SQR(pba->lrs_M_phi * _Mpc_times_eV) + 1 + g_over_M_mT * phi_M); // Everything here is dimensionless
+            delta_phi_M = - rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs]/_eV4_to_rho_class * phi_M_dot_over_H * (1 + g_over_M_mT * phi_M) /
+              (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_M * phi_M_dot_over_H) / //-g/(M mT) * (deltarho-3deltap) [eV^2]
+              (k2/a2/SQR(pba->lrs_M_phi * _Mpc_times_eV) + 1 + ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]); // Everything here is dimensionless
           } else{
             // Compute rhs
             double rhs = 0;
@@ -8056,7 +8024,7 @@ int perturb_total_stress_energy(
           }
           
           ppw->delta_phi_M_lrsad = delta_phi_M;
-          delta_phi_M_prime=0.; //In the adiabatic approximation, the field derivative is negligible as M>>H
+          delta_phi_M_prime=0.; //In the adiabatic approximation, the field derivative is negligible as M>>k,H
         }
       }
 
@@ -8072,9 +8040,9 @@ int perturb_total_stress_energy(
 	  rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
 	  w_lrs = p_lrs_bg/rho_lrs_bg;
 	  cg2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
-			     1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
-	    (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
-	  if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+			     1/g_over_M_mT * phi_M_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
+	    (3*(1 + w_lrs) + phi_M * phi_M_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // p_prime/rho_prime
+	  if ((ppt->has_source_delta_lrs_F == _TRUE_) || (ppt->has_source_theta_lrs_F == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
 	    ppw->theta_lrs_F = y[idx+1];
 	    ppw->shear_lrs_F = y[idx+2];
 	  }
@@ -8106,7 +8074,6 @@ int perturb_total_stress_energy(
 	    q2 = q*q;
 	    epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 
-	    // ivan
 	    rho_delta_lrs += q2*epsilon*pba->w_lrs[index_q]*(y[idx]
 							     + a/pba->a_today * ppw->pvecback[pba->index_bg_mT_over_T0_lrs] / SQR(epsilon) * pba->lrs_g_over_M * delta_phi_M / T_F);
 	    // The extra term is dimensionless, so we are safe
@@ -8125,7 +8092,7 @@ int perturb_total_stress_energy(
 	  rho_plus_p_shear_lrs *= 2.0/3.0*factor;
 	  delta_p_lrs *= factor/3.;
 
-	  if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+	  if ((ppt->has_source_delta_lrs_F == _TRUE_) || (ppt->has_source_theta_lrs_F == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
 	    ppw->theta_lrs_F = rho_plus_p_theta_lrs/
 	      (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
 	    ppw->shear_lrs_F = rho_plus_p_shear_lrs/
@@ -8148,17 +8115,17 @@ int perturb_total_stress_energy(
 	p_lrs_bg = ppw->pvecback[pba->index_bg_p_lrs_F];
         
 	rho_plus_p_lrs = rho_lrs_bg + p_lrs_bg;
-	if ((ppt->has_source_delta_lrs == _TRUE_) || (ppt->has_source_theta_lrs == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
-	  ppw->theta_lrs_F = y[idx+1] / (rho_plus_p_lrs);
+	if ((ppt->has_source_delta_lrs_F == _TRUE_) || (ppt->has_source_theta_lrs_F == _TRUE_) || (ppt->has_source_delta_m == _TRUE_)) {
+	  ppw->theta_lrs_F = y[idx+1] / (rho_plus_p_lrs); // For nuggets we store (rho+p)*theta, not theta. This ensures the continuity of the stress-energy tensor
 	  ppw->shear_lrs_F = 0.;
 	}
 
 	// Fermion density and pressure
-	ppw->delta_lrs_F = y[idx] / rho_lrs_bg;
+	ppw->delta_lrs_F = y[idx] / rho_lrs_bg; // For nuggets we store delta_rho, not delta_rho/rho. This ensures the continuity of the stress-energy tensor 
 	ppw->delta_p_lrs_F = 0.;
         
-	ppw->delta_rho += y[idx]; // For nuggets, we keep delta_rho
-	ppw->rho_plus_p_theta += y[idx+1]; // For nuggets, we keep (rho+p)*theta
+	ppw->delta_rho += y[idx]; // For nuggets we store delta_rho
+	ppw->rho_plus_p_theta += y[idx+1]; // For nuggets we store (rho+p)*theta
 	ppw->delta_p += 0;
         
 	ppw->rho_plus_p_tot += rho_plus_p_lrs;
@@ -8190,25 +8157,24 @@ int perturb_total_stress_energy(
         
 	  delta_rho_scf = 1./a2*phi_M_prime*delta_phi_M_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)
 	    + phi_M * delta_phi_M
-	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
+	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // [eV^4]
 	  delta_p_scf = 1./a2*phi_M_prime*delta_phi_M_prime / SQR(pba->lrs_M_phi * _Mpc_times_eV)  
 	    - phi_M * delta_phi_M
-	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // eV^4
+	    - 1./a2*SQR(phi_M_prime)*psi / SQR(pba->lrs_M_phi * _Mpc_times_eV); // [eV^4]
 	}
-
       
 	ppw->delta_rho += delta_rho_scf * _eV4_to_rho_class;
 
-	ppw->rho_plus_p_theta += phi_M_prime*delta_phi_M /SQR(pba->lrs_M_phi) // eV^2/Mpc
-	  * k*k/a2 // eV^2/Mpc^3
-	  / SQR(_Mpc_times_eV) // eV^4/Mpc
-	  *_eV4_to_rho_class; // Mpc^-3, with the 8piG/3 factor
+	ppw->rho_plus_p_theta += phi_M_prime*delta_phi_M /SQR(pba->lrs_M_phi) // [eV^2/Mpc]
+	  * k*k/a2 // [eV^2/Mpc^3]
+	  / SQR(_Mpc_times_eV) // [eV^4/Mpc]
+	  *_eV4_to_rho_class; // [Mpc^-3, with the 8piG/3 factor]
       
 	ppw->delta_p += delta_p_scf * _eV4_to_rho_class;
       }
-      ppw->rho_plus_p_tot += SQR(phi_M_prime/a2 / pba->lrs_M_phi) // eV^2/Mpc^2
-	/ SQR(_Mpc_times_eV) // eV^4
-	* _eV4_to_rho_class; // Mpc^-2, with the 8piG/3 factor
+      ppw->rho_plus_p_tot += SQR(phi_M_prime/a2 / pba->lrs_M_phi) // [eV^2/Mpc^2]
+	/ SQR(_Mpc_times_eV) // [eV^4]
+	* _eV4_to_rho_class; // [Mpc^-2, with the 8piG/3 factor]
     }
     
     /* scalar field contribution.
@@ -8248,7 +8214,7 @@ int perturb_total_stress_energy(
       ppw->delta_p += delta_p_scf;
 
       ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_scf]+ppw->pvecback[pba->index_bg_p_scf];
-      
+
     }
 
     /* add your extra species here */
@@ -8475,7 +8441,7 @@ int perturb_total_stress_energy(
     }
 
     /** - --> lrs contribution to gravitational wave source: */
-    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations, or nuggets
+    // We have *NOT* implemented long-range interactions in tensor perturbations
     if (ppt->evolve_tensor_lrs == _TRUE_){
 
       idx = ppw->pv->index_pt_psi0_lrs;
@@ -8952,8 +8918,8 @@ int perturb_sources(
     }
 
     /* delta_lrs */
-    if (ppt->has_source_delta_lrs == _TRUE_) {
-      _set_source_(ppt->index_tp_delta_lrs) = ppw->delta_lrs_F
+    if (ppt->has_source_delta_lrs_F == _TRUE_) {
+      _set_source_(ppt->index_tp_delta_lrs_F) = ppw->delta_lrs_F
         + 3.*a_prime_over_a*(1+pvecback[pba->index_bg_p_lrs_F]
                              /pvecback[pba->index_bg_rho_lrs_F])*theta_over_k2; // N-body gauge correction
     }
@@ -9071,8 +9037,8 @@ int perturb_sources(
     }
 
     /* theta_lrs */
-    if (ppt->has_source_theta_lrs == _TRUE_) {
-      _set_source_(ppt->index_tp_theta_lrs) = ppw->theta_lrs_F
+    if (ppt->has_source_theta_lrs_F == _TRUE_) {
+      _set_source_(ppt->index_tp_theta_lrs_F) = ppw->theta_lrs_F
         + theta_shift; // N-body gauge correction
     }
   }
@@ -9443,9 +9409,9 @@ int perturb_print_variables(double tau,
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
       double phi_M_prime = ppw->pvecback[pba->index_bg_phi_M_prime_lrs]; // Background phi_prime [eV/Mpc]
       double a_prime_over_a = pvecback[pba->index_bg_H] * pvecback[pba->index_bg_a];
-      double M_phi_dot_over_H = phi_M_prime / a_prime_over_a; // Background M_phi_dot/H [eV]
-      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
-      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+      double phi_M_dot_over_H = phi_M_prime / a_prime_over_a; // Background phi*M_dot/H [eV]
+      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // [eV^-2]
+      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
 
       double delta_phi_M=0;
       if (ppt->has_lrs_phi_pt == _TRUE_){
@@ -9470,8 +9436,8 @@ int perturb_print_variables(double tau,
 	  shear_lrs = y[idx+2];
 	  //This is the adiabatic sound speed:
 	  delta_p_over_delta_rho_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
-						1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
-	    (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // Ivan: p_prime/rho_prime
+						1/g_over_M_mT * phi_M_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
+	    (3*(1 + w_lrs) + phi_M * phi_M_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class)); // p_prime/rho_prime
 	  idx += ppw->pv->l_max_lrs+1;
 	}
 	else{
@@ -9512,7 +9478,6 @@ int perturb_print_variables(double tau,
 	  shear_lrs = rho_plus_p_shear_lrs/
 	    (ppw->pvecback[pba->index_bg_rho_lrs_F]+ppw->pvecback[pba->index_bg_p_lrs_F]);
 	  delta_p_over_delta_rho_lrs = delta_p_lrs/rho_delta_lrs;
-
 	}
       } else{
 	// Nugget approximation: the perturbations are evolved integrated:
@@ -9521,8 +9486,8 @@ int perturb_print_variables(double tau,
 	pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F];
 	w_lrs = p_lrs_bg/rho_lrs_bg;
 
-	delta_lrs = y[idx] / rho_lrs_bg; // For nuggets, we keep delta_rho
-	theta_lrs = y[idx+1] / (rho_lrs_bg + p_lrs_bg); // For nuggets, we keep (rho+p)*theta
+	delta_lrs = y[idx] / rho_lrs_bg; // For nuggets we store delta_rho
+	theta_lrs = y[idx+1] / (rho_lrs_bg + p_lrs_bg); // For nuggets we store (rho+p)*theta
 	shear_lrs = 0.;
 	//This is the adiabatic sound speed:
 	delta_p_over_delta_rho_lrs = 0.;
@@ -9824,9 +9789,10 @@ int perturb_print_variables(double tau,
 
     /* Scalar-mediated long range interaction */
     if (ppt->evolve_tensor_lrs == _TRUE_) {
+      // We have *NOT* implemented long-range interactions in tensor perturbations
       // Background quantities
-      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
-      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // [eV^-2]
+      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
       
       double delta_phi_M=0;
       if (ppt->has_lrs_phi_pt == _TRUE_
@@ -9927,7 +9893,7 @@ int perturb_derivs(double tau,
   /** Summary: */
 
   /** - define local variables */
-  
+
   /* multipole */
   int l;
 
@@ -10053,7 +10019,6 @@ int perturb_derivs(double tau,
     dmu_idm_dr = pvecthermo[pth->index_th_dmu_idm_dr];
     dmu_idr = pth->b_idr/pth->a_idm_dr*pba->Omega0_idr/pba->Omega0_idm_dr*dmu_idm_dr;
   }
-
 
   /** - Compute 'generalised cotK function of argument \f$ \sqrt{|K|}*\tau \f$, for closing hierarchy.
       (see equation 2.34 in arXiv:1305.3261): */
@@ -10467,19 +10432,16 @@ int perturb_derivs(double tau,
 
     }
 
-
-    
-    /* jordi */
-    // ivan
+    /** - --> scalar-mediated long range interaction (lrs) */
     if (ppt->has_lrs_phi_pt == _TRUE_
 	&& (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)){
       // Background quantities
       double a_prime_over_a = ppw->pvecback[pba->index_bg_H] * ppw->pvecback[pba->index_bg_a];
       double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
       double phi_M_prime = ppw->pvecback[pba->index_bg_phi_M_prime_lrs]; // Background phi_prime [eV/Mpc]
-      double M_phi_dot_over_H = phi_M_prime / a_prime_over_a; // Background M_phi_dot/H [eV]
-      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
-      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+      double phi_M_dot_over_H = phi_M_prime / a_prime_over_a; // Background phi*M_dot/H [eV]
+      double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // [eV^-2]
+      double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
       rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
       
       if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off){
@@ -10490,20 +10452,12 @@ int perturb_derivs(double tau,
 	if(ppw->approx[ppw->index_ap_lrsfa] == (int)lrsfa_on){
 	  dy[pv->index_pt_phi_M_prime_lrs] =
 	    - 2.*a_prime_over_a*y[pv->index_pt_phi_M_prime_lrs]
-	    - metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: M_phi_prime is eV^2/Mpc and metric_continuity gives another Mpc^-1)
-	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*g_over_M_mT * phi_M)*y[pv->index_pt_phi_M_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and Mlrs is eV^2)
-	    - a2*rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs] * M_phi_dot_over_H * SQR(pba->lrs_M_phi) * ( 1 + g_over_M_mT * phi_M) /
-	    (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_M * M_phi_dot_over_H) * SQR(_Mpc_times_eV);// -a^2 M g/mT (deltarho-3deltap) The last factor convers eV^4 to eV^2/Mpc^2
-#ifdef JORDBG
-          printf("terms 1: %f\n", 2.*a_prime_over_a*y[pv->index_pt_phi_M_prime_lrs]);
-          printf("terms 2: %f\n", metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs]);
-          printf("terms 3: %f\n", (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*g_over_M_mT * phi_M)*y[pv->index_pt_phi_M_lrs]);
-          printf("terms 4: %f\n", a2*rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs] * M_phi_dot_over_H * SQR(pba->lrs_M_phi) * ( 1 + g_over_M_mT * phi_M) /
-	    (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_M * M_phi_dot_over_H) * SQR(_Mpc_times_eV));
-#endif
-
+	    - metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs] // metric_continuity = h'/2 in synchronous gauge
+	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])*y[pv->index_pt_phi_M_lrs]
+	    - a2*SQR(pba->lrs_M_phi)*rho_lrs_bg*y[ppw->pv->index_pt_psi0_lrs]/_eV4_to_rho_class * phi_M_dot_over_H * ( 1 + g_over_M_mT * phi_M) /
+	    (3*(rho_lrs_bg + p_lrs_bg)/_eV4_to_rho_class + phi_M * phi_M_dot_over_H) * SQR(_Mpc_times_eV);// -a^2 M g/mT (deltarho-3deltap). The last factor convers eV^4 to eV^2/Mpc^2
 	} else{
-	  // Compute M*rhs over a^2
+	  // Compute M^2*rhs over a^2
 	  double rhs = 0;
 	  double q2;
 	  double factor = pba->factor_lrs*pow(pba->a_today/a,4);
@@ -10512,32 +10466,22 @@ int perturb_derivs(double tau,
 	    q2 = q*q;
 	    epsilon = sqrt(q2+ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a2);
 	    rhs += q2 * ppw->pvecback[pba->index_bg_mT_over_T0_lrs]*a/(epsilon*T_F) * pba->w_lrs[index_q]*y[ppw->pv->index_pt_psi0_lrs];
-#ifdef JORDBG
-            printf("terms eps: %f\n", epsilon);
-#endif
 	  }
 	  rhs *= factor;
 	  rhs /= _eV4_to_rho_class;
-	  rhs *= - pba->lrs_M_phi * pba->lrs_g_over_M; // [eV^3]
+	  rhs *= - SQR(pba->lrs_M_phi) * pba->lrs_g_over_M; // [eV^4]
 	  
 	  dy[pv->index_pt_phi_M_prime_lrs] =
 	    - 2.*a_prime_over_a*y[pv->index_pt_phi_M_prime_lrs]
-	    - metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs] //metric_continuity = h'/2 it couples with the 0 order lrs via the metric (I guess units are fine: M_phi_prime is eV^2/Mpc and metric_continuity gives another Mpc^-1)
-	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])*y[pv->index_pt_phi_M_lrs]   // term with k and mass scale all in kpc (Units probably ok: the parenthesis is Mpc^-2 and Mlrs is eV^2)
-           + a2 * pba->lrs_M_phi * rhs * SQR(_Mpc_times_eV);// The last factor convers eV^4 to eV^2/Mpc^2
-#ifdef JORDBG
-          printf("terms 1: %f\n", 2.*a_prime_over_a*y[pv->index_pt_phi_M_prime_lrs]);
-          printf("terms 2: %f\n", metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs]);
-          printf("terms 3: %f\n", (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])*y[pv->index_pt_phi_M_lrs]);
-          printf("terms 4: %f\n", a2 * pba->lrs_M_phi * rhs * SQR(_Mpc_times_eV));
-#endif
-
-          
+	    - metric_continuity*pvecback[pba->index_bg_phi_M_prime_lrs] // metric_continuity = h'/2 in synchronous gauge
+	    - (k2 + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV) + a2*SQR(pba->lrs_M_phi*_Mpc_times_eV)*ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])*y[pv->index_pt_phi_M_lrs]
+            + a2 * rhs * SQR(_Mpc_times_eV);// The last factor convers eV^4 to eV^2/Mpc^2        
 	}
       }
     }
-      /** - ---> scalar field (scf) */
-    
+
+    /** - ---> scalar field (scf) */
+
     if (pba->has_scf == _TRUE_) {
 
       /** - ----> field value */
@@ -10830,7 +10774,7 @@ int perturb_derivs(double tau,
       double delta_phi_M=0;
       double delta_phi_M_prime=0;
       if (ppt->has_lrs_phi_pt == _TRUE_
-	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off))
+	  && (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off)){
         if(ppw->approx[ppw->index_ap_lrsad1] == (int)lrsad1_off && ppw->approx[ppw->index_ap_lrsad2] == (int)lrsad2_off){
           delta_phi_M = y[ppw->pv->index_pt_phi_M_lrs];
           delta_phi_M_prime = y[ppw->pv->index_pt_phi_M_prime_lrs];
@@ -10838,6 +10782,7 @@ int perturb_derivs(double tau,
           delta_phi_M = ppw->delta_phi_M_lrsad;
           delta_phi_M_prime = 0;
         } 
+      }
       
       /** - ----> first case: use a fluid approximation (lrsfa) */
       //TBC: curvature
@@ -10847,17 +10792,17 @@ int perturb_derivs(double tau,
 	// Background quantities
 	double phi_M = ppw->pvecback[pba->index_bg_phi_M_lrs]; // Background phi*M [eV^2]
 	double phi_M_prime = ppw->pvecback[pba->index_bg_phi_M_prime_lrs]; // Background phi_prime [eV/Mpc]
-	double M_phi_dot_over_H = phi_M_prime / a_prime_over_a; // Background M_phi_dot/H [eV]
-	double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // 1/eV^2
-	double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_;//T in electronvolt
+	double phi_M_dot_over_H = phi_M_prime / a_prime_over_a; // Background phi*M_dot/H [eV]
+	double g_over_M_mT = pba->lrs_g_over_M/((ppw->pvecback[pba->index_bg_mT_over_T0_lrs]/pba->lrs_m_F_over_T0)*pba->lrs_m_F); // [eV^-2]
+	double T_F = pba->T_cmb*pba->lrs_T_F/(a/pba->a_today)*_k_B_/_eV_; // [eV]
         
         rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
         p_lrs_bg = pvecback[pba->index_bg_p_lrs_F]; /* background pressure */
         pseudo_p_lrs = pvecback[pba->index_bg_pseudo_p_lrs_F]; /* pseudo-pressure (see CLASS IV paper) */
         w_lrs = p_lrs_bg/rho_lrs_bg; /* equation of state parameter */
         ca2_lrs = w_lrs * (5.0 - pseudo_p_lrs/p_lrs_bg +
-			   1/g_over_M_mT * M_phi_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
-	  (3*(1 + w_lrs) + phi_M * M_phi_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class));  /* adiabatic sound speed: p_prime/rho_prime */ // Ivan
+			   1/g_over_M_mT * phi_M_dot_over_H /(3*p_lrs_bg/_eV4_to_rho_class) * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs]) /
+	  (3*(1 + w_lrs) + phi_M * phi_M_dot_over_H / (rho_lrs_bg/_eV4_to_rho_class));  /* adiabatic sound speed: p_prime/rho_prime */
         
         /* c_eff is (delta p / delta rho) in the gauge under
            consideration (not in the gauge comoving with the
@@ -10868,7 +10813,7 @@ int perturb_derivs(double tau,
         /* different ansatz for sound speed c_eff and viscosity speed c_vis */
         if (ppr->lrs_fluid_approximation == lrsfa_mb) {
           ceff2_lrs = ca2_lrs;
-          cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); // Ivan
+          cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg);
         }
         if (ppr->lrs_fluid_approximation == lrsfa_hu) {
           ceff2_lrs = ca2_lrs;
@@ -10876,7 +10821,7 @@ int perturb_derivs(double tau,
         }
         if (ppr->lrs_fluid_approximation == lrsfa_CLASS) {
           ceff2_lrs = ca2_lrs;
-          cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg); // Ivan
+          cvis2_lrs = 3.*w_lrs * w_lrs/3.0/(1.0+w_lrs)*(5.0-pseudo_p_lrs/p_lrs_bg);
         }
 
 
@@ -10885,11 +10830,11 @@ int perturb_derivs(double tau,
         dy[idx] = -(1.0+w_lrs)*(y[idx+1]+metric_continuity)
           - 3.0*(a_prime_over_a + g_over_M_mT*phi_M_prime)*(ceff2_lrs-w_lrs)*y[idx]
           - phi_M/(rho_lrs_bg/_eV4_to_rho_class) * delta_phi_M_prime
-	  + phi_M/(rho_lrs_bg/_eV4_to_rho_class) * g_over_M_mT * phi_M_prime*delta_phi_M; // Ivan
+	  + phi_M/(rho_lrs_bg/_eV4_to_rho_class) * g_over_M_mT * phi_M_prime*delta_phi_M;
 
         /** - -----> exact euler equation */
 
-        dy[idx+1] = -(a_prime_over_a*(1.0-3.0*ca2_lrs) - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1.+ca2_lrs)*phi_M_prime)*y[idx+1] // Ivan
+        dy[idx+1] = -(a_prime_over_a*(1.0-3.0*ca2_lrs) - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1.+ca2_lrs)*phi_M_prime)*y[idx+1]
           + ceff2_lrs/(1.0+w_lrs)*k2*y[idx]
 	  - k2*y[idx+2]
           + metric_euler
@@ -10901,14 +10846,16 @@ int perturb_derivs(double tau,
 
           dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau +
 			    1./3.*((1/g_over_M_mT * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])/(3*p_lrs_bg/_eV4_to_rho_class)
-				   - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1+ca2_lrs))*phi_M_prime)*y[idx+2] // Ivan
+				   - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1+ca2_lrs))*phi_M_prime)*y[idx+2]
             +8.0/3.0*cvis2_lrs/(1.0+w_lrs)*s_l[2]*(y[idx+1]+metric_shear);
 
         }
 
         if (ppr->lrs_fluid_approximation == lrsfa_hu) {
 
-          dy[idx+2] = -3.0*a_prime_over_a*ca2_lrs/w_lrs*y[idx+2]
+          dy[idx+2] = -3.0*(a_prime_over_a*ca2_lrs/w_lrs + 
+                            1./3.*((1/g_over_M_mT * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])/(3*p_lrs_bg/_eV4_to_rho_class)
+				   - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1+ca2_lrs))*phi_M_prime)*y[idx+2]
             +8.0/3.0*cvis2_lrs/(1.0+w_lrs)*s_l[2]*(y[idx+1]+metric_shear);
 
         }
@@ -10917,7 +10864,7 @@ int perturb_derivs(double tau,
 
           dy[idx+2] = -3.0*(a_prime_over_a*(2./3.-ca2_lrs-pseudo_p_lrs/p_lrs_bg/3.)+1./tau +
 			    1./3.*((1/g_over_M_mT * ppw->pvecback[pba->index_bg_MTsq_over_Msq_lrs])/(3*p_lrs_bg/_eV4_to_rho_class)
-				   - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1+ca2_lrs))*phi_M_prime)*y[idx+2] // Ivan
+				   - phi_M/(rho_lrs_bg/_eV4_to_rho_class)/(1.+w_lrs)*(1+ca2_lrs))*phi_M_prime)*y[idx+2]
             +8.0/3.0*cvis2_lrs/(1.0+w_lrs)*s_l[2]*(y[idx+1]+metric_ufa_class);
 
         }
@@ -10932,7 +10879,7 @@ int perturb_derivs(double tau,
       else if (pba->has_lrs_nuggets == _FALSE_ || ppw->approx[ppw->index_ap_lrsnug] == (int)lrsnug_off) {
 
         /** - -----> loop over momentum */
-        double T0_F = pba->T_cmb*pba->lrs_T_F*_k_B_/_eV_;//T in electronvolt
+        double T0_F = pba->T_cmb*pba->lrs_T_F*_k_B_/_eV_; // [eV]
 
         for (index_q=0; index_q < pv->q_size_lrs; index_q++) {
 
@@ -10974,7 +10921,9 @@ int perturb_derivs(double tau,
           idx += (pv->l_max_lrs+1);
         }
       }
-      /** - ----> second case: use CDM-like equation for nuggets */
+
+      /** - ----> third case: use CDM-like equation for nuggets */
+
       else {
 	rho_lrs_bg = pvecback[pba->index_bg_rho_lrs_F]; /* background density */
 	
@@ -11305,7 +11254,7 @@ int perturb_derivs(double tau,
     }
 
     /** - --> Scalar-mediated long range interaction */
-    //TO-DO: we didn't consider variations of the scalar field background, or scalar field perturbations, or nuggets
+    // We have *NOT* implemented long-range interactions in tensor perturbations
     //TBC: curvature in all ncdm
     if (ppt->evolve_tensor_lrs == _TRUE_) {
 
@@ -11350,14 +11299,7 @@ int perturb_derivs(double tau,
     dy[pv->index_pt_gwdot] = pvecmetric[ppw->index_mt_gw_prime_prime];
 
   }
-  
-#ifdef JORDBG
-  printf("pt_size: %d \n", pv->pt_size);
 
-  int i;
-  for(i = 0; i< pv->pt_size;i++)
-    printf("%d %lf\n", i, dy[i]);
-#endif
   return _SUCCESS_;
 }
 

@@ -1,118 +1,63 @@
-CLASS: Cosmic Linear Anisotropy Solving System  {#mainpage}
+CLASS_lrs: Cosmic Linear Anisotropy Solving System with Long Range Interactions
 ==============================================
 
-Authors: Julien Lesgourgues and Thomas Tram
+Forked by Ivan Esteban and Jordi Salvado from the CLASS code by Julien
+Lesgourgues and Thomas Tram.
 
-with several major inputs from other people, especially Benjamin
-Audren, Simon Prunet, Jesus Torrado, Miguel Zumalacarregui, Francesco
-Montanari, etc.
+This is a fork of CLASS 2.9.2, designed to implement the cosmology of
+scalar-mediated long range interactions among fermions. For details,
+see the companion paper.
 
-For download and information, see http://class-code.net
+There are two ipython notebooks in the notebooks/ folder, _longrange.ipynb_
+and _longrange\_checks.ipynb_, that you can have a look at to familiarize
+yourself with this code.
 
-
-Compiling CLASS and getting started
+Input parameters
 -----------------------------------
+* _longrangescalar_ -- If 'y' or 'Y', include scalar-mediated long range
+interactions
+* _longrangescalar\_phi\_pt_ -- If 'y' or 'Y', include scalar field
+perturbations (see caveats below)
+* _longrangescalar\_nuggets_ -- If 'y' or 'Y', include fermion _nugget_
+formation (see caveats below)
+* _lrs\_g\_over\_M_ -- Interaction coupling over scalar mass in
+eV<sup>-1<\sup>
+* _lrs\_M\_phi_ -- Scalar mass in eV. Only relevant if scalar field
+perturbations are being taken into account
+* _lrs\_m\_F_ -- Fermion mass in eV
+* _log10\_lrs_ -- If 'y' or 'Y', the input parameters _lrs\_g\_over\_M_,
+_lrs\_M\_phi_ and _lrs\_m\_F_ are interpreted as the base-10 logarithms
+of the corresponding physical parameters
+* _lrs\_g\_F_ -- Number of internal degrees of freedom of the fermion
+* _lrs\_T\_F_ -- Fermion temperature over photon temperature, assumed to
+be constant
 
-(the information below can also be found on the webpage, just below
-the download button)
+Caveats
+-----------------------------------
+The main physical issue is that density perturbations of a system of
+attractive long-range interacting fermions are unstable. When fermions become
+non-relativistic, they collapse into non-linear _nuggets_ that a linear
+code as CLASS cannot properly model.
+This can be overcome by assuming that _nugget_ formation takes place
+over timescales and distances much smaller than cosmological scales. In
+this case, one can enforce an _instantaneous_ transition to a dust-like
+behaviour for some pre-computed fermion temperature T<sub>nug<\sub>. This is
+equivalent to setting
 
-Download the code from the webpage and unpack the archive (tar -zxvf
-class_vx.y.z.tar.gz), or clone it from
-https://github.com/lesgourg/class_public. Go to the class directory
-(cd class/ or class_public/ or class_vx.y.z/) and compile (make clean;
-make class). You can usually speed up compilation with the option -j:
-make -j class. If the first compilation attempt fails, you may need to
-open the Makefile and adapt the name of the compiler (default: gcc),
-of the optimization flag (default: -O4 -ffast-math) and of the OpenMP
-flag (default: -fopenmp; this flag is facultative, you are free to
-compile without OpenMP if you don't want parallel execution; note that
-you need the version 4.2 or higher of gcc to be able to compile with
--fopenmp). Many more details on the CLASS compilation are given on the
-wiki page
+_longrangescalar\_phi\_pt_ = 'N'
+_longrangescalar\_nuggets_ = 'y'
 
-https://github.com/lesgourg/class_public/wiki/Installation
+It is important to turn off scalar field perturbations, as they may make
+perturbations exponentially grow if T<sub>nug<\sub> is not 100% precise. For the
+details of how we estimate T<sub>nug<\sub>, see Appendix B in the companion paper.
 
-(in particular, for compiling on Mac >= 10.9 despite of the clang
-incompatibility with OpenMP).
+The code can also be run with scalar field perturbations, in which case
+non-relativistic fermion density perturbations will exponentially grow.
+Notice, though, that this growth is stronger at scales much smaller than
+those computed by CLASS, what in turn affects the background. Such
+simulations are therefore unphysical.
 
-To check that the code runs, type:
-
-    ./class explanatory.ini
-
-The explanatory.ini file is THE reference input file, containing and
-explaining the use of all possible input parameters. We recommend to
-read it, to keep it unchanged (for future reference), and to create
-for your own purposes some shorter input files, containing only the
-input lines which are useful for you. Input files must have a *.ini
-extension.
-
-If you want to play with the precision/speed of the code, you can use
-one of the provided precision files (e.g. cl_permille.pre) or modify
-one of them, and run with two input files, for instance:
-
-    ./class test.ini cl_permille.pre
-
-The files *.pre are suppposed to specify the precision parameters for
-which you don't want to keep default values. If you find it more
-convenient, you can pass these precision parameter values in your *.ini
-file instead of an additional *.pre file.
-
-The automatically-generated documentation is located in
-
-    doc/manual/html/index.html
-    doc/manual/CLASS_manual.pdf
-
-On top of that, if you wish to modify the code, you will find lots of
-comments directly in the files.
-
-Python
-------
-
-To use CLASS from python, or ipython notebooks, or from the Monte
-Python parameter extraction code, you need to compile not only the
-code, but also its python wrapper. This can be done by typing just
-'make' instead of 'make class' (or for speeding up: 'make -j'). More
-details on the wrapper and its compilation are found on the wiki page
-
-https://github.com/lesgourg/class_public/wiki
-
-Plotting utility
-----------------
-
-Since version 2.3, the package includes an improved plotting script
-called CPU.py (Class Plotting Utility), written by Benjamin Audren and
-Jesus Torrado. It can plot the Cl's, the P(k) or any other CLASS
-output, for one or several models, as well as their ratio or percentage
-difference. The syntax and list of available options is obtained by
-typing 'pyhton CPU.py -h'. There is a similar script for MATLAB,
-written by Thomas Tram. To use it, once in MATLAB, type 'help
-plot_CLASS_output.m'
-
-Developing the code
---------------------
-
-If you want to develop the code, we suggest that you download it from
-the github webpage
-
-https://github.com/lesgourg/class_public
-
-rather than from class-code.net. Then you will enjoy all the feature
-of git repositories. You can even develop your own branch and get it
-merged to the public distribution. For related instructions, check
-
-https://github.com/lesgourg/class_public/wiki/Public-Contributing
-
-Using the code
---------------
-
-You can use CLASS freely, provided that in your publications, you cite
-at least the paper `CLASS II: Approximation schemes <http://arxiv.org/abs/1104.2933>`. Feel free to cite more CLASS papers!
-
-Support
--------
-
-To get support, please open a new issue on the
-
-https://github.com/lesgourg/class_public
-
-webpage!
+Apart from that, the implementation largely follows the CLASS 2.9.2
+implementation of warm relics (named _ncdm_ in the code). Fluid
+approximations are in principle implemented, but their accuracy has not
+been tested. Tensor perturbations have not been properly implemented.

@@ -3,14 +3,17 @@
  */
 #include "longrange.h"
 
-/* rho_class = 8piG/3 * rho_physical / Mpc^-2 = 1374.3 * rho_physical/eV^4
+/* CLASS stores energy densities in units such that
+   
+   rho_class = 8piG/3 * rho_physical / Mpc^-2 = 1374.3 * rho_physical/eV^4
+   
    Alternatively, 
    1374.3 = 8*pi*G/3 / (hbar^3*c^7) * Mpc_over_m^2 * eV^4
 
    This factor will be stored here
 */
-const double _eV4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2) * pow(_eV_, 4);
-const double _J4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2);
+const double _eV4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2) * pow(_eV_, 4); // Multiply by this to convert eV^4 to CLASS units
+const double _J4_to_rho_class = 8*M_PI*_G_/3 / (pow(_h_P_/(2*_PI_), 3) * pow(_c_, 7)) * pow(_Mpc_over_m_, 2); // Multiply by this to convert J^4 to CLASS units
 const double _Mpc_times_eV = _eV_/(_h_P_/(2*_PI_) * _c_) * _Mpc_over_m_; // Multiply by this to convert eV to Mpc^-1
 
 /**
@@ -231,24 +234,25 @@ int background_lrs_init(
 
 /**
  * For a given long-range interacting species: given the quadrature weights, the mass
- * and the redshift, find background FERMION quantities by a quick weighted
+ * and the redshift, find background *fermion* quantities by a quick weighted
  * sum over.  Input parameters passed as NULL pointers are not
  * evaluated for speed-up
  *
  * @param qvec             Input: sampled momenta
  * @param wvec             Input: quadrature weights
  * @param qsize            Input: number of momenta/weights
- * @param m_over_T0        Input: mass divided by *present day* fermion temperature
+ * @param m_over_T0        Input: *effective* fermion mass divided by its *present day* temperature
  * @param factor           Input: normalization factor for the p.s.d.
  * @param z                Input: redshift
  * @param rho              Output: energy density
  * @param p                Output: pressure
- * @param I_MPhi           Output: \integ d^3 m/T 1/eps f(u)
+ * @param I_MPhi           Output: \integ d^3q m/T 1/eps f(q)
+                           where eps^2 = q^2 + (m/T)^2 and q=p/T
  * @param pseudo_p         Output: pseudo-pressure used in perturbation module for fluid approx
- * @param I1               Output: \integ d^3u m/T (2 eps^2 + (m/T)^2)/eps^3 f(u)
- *                         where eps^2 = u^2 + (m/T)^2
- * @param I2               Output: \integ d^3u u^2/eps^3 f(u)
- *                         where eps^2 = u^2 + (m/T)^2
+ * @param I1               Output: \integ d^3q m/T (2 eps^2 + (m/T)^2)/eps^3 f(q)
+ *                         where eps^2 = q^2 + (m/T)^2 and q=p/T
+ * @param I2               Output: \integ d^3q q^2/eps^3 f(q)
+ *                         where eps^2 = q^2 + (m/T)^2 and q=p/T
  */
 
 int background_lrs_momenta(
@@ -261,7 +265,7 @@ int background_lrs_momenta(
                             double z,
                             double * rho, // density
                             double * p,   // pressure
-                            double * I_Mphi,  // d rho / d(m_over_T0) used in next function
+                            double * I_Mphi,  
                             double * pseudo_p,  // pseudo-p used in ncdm fluid approx
 			    double * I1,
 			    double * I2
@@ -313,6 +317,9 @@ int background_lrs_momenta(
   return _SUCCESS_;
 }
 
+/**
+ * Returns the *effective* fermion mass divided by its present day temperature
+ */
 inline double get_mT_over_T0_lrs(struct background * pba, double phi_M){
   // Convert phi_M to J and divide by kB*T0
   double phi_M_over_T0 = phi_M * _eV_ / (_k_B_*pba->lrs_T_F*pba->T_cmb);
@@ -320,20 +327,22 @@ inline double get_mT_over_T0_lrs(struct background * pba, double phi_M){
   return pba->lrs_m_F_over_T0 + phi_M_over_T0 * pba->lrs_g_over_M;
 }
 
-/* Function that, when equals to zero, gives the scalar field
+/**
+ * Function of the scalar field that is zero when the e.o.m. are satisfied
  * (it's the derivative of the potential with respect to the field)
  *
- * phi_M    --- Scalar field times its mass [eV^2]
- * param    --- pointer to background_parameters_and_redshift struct containing background parameters and redshift
- * y        --- Output
+ * @param phi_M  Input:  Scalar field times its mass (eV^2)
+ * @param param  Input:  Pointer to background_parameters_and_redshift struct
+ * @param y      Output: If zero, the scalar field satisfies the e.o.m
  */
 int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message){
   struct background * pba;
   struct background_parameters_and_redshift * pbaz;
   pbaz = param;
   pba = pbaz->pba;
-  
-  double I_Mphi; // I_Mphi = \integ m/E
+
+  // We first compute \integ d^3p m/E f(p), in eV^3
+  double I_Mphi;
   class_call(background_lrs_momenta(pba->q_lrs_bg,
 				    pba->w_lrs_bg,
 				    pba->q_size_lrs_bg,
@@ -364,11 +373,11 @@ int potentialPrime(double phi_M, void *param, double *y, ErrorMsg error_message)
  *
  * @param pba    Input: pointer to background structure
  * @param z      Input: redshift
- * @param phi_M  Output: scalar field times mass [eV^2]
+ * @param phi_M  Output: scalar field times mass (eV^2)
  */
 int get_phi_M_lrs(struct background * pba, double z, double * phi_M){
   double m_F_over_T = pba->lrs_m_F_over_T0 / (1.+z);
-  double T = pba->lrs_m_F / m_F_over_T; // Temperature [eV]
+  double T = pba->lrs_m_F / m_F_over_T; // Temperature (eV)
   if(m_F_over_T < 1e-5 ||
      m_F_over_T/(pba->lrs_g_F/24. * SQR(pba->lrs_g_over_M*T)) < 1e-5){
     // Analytic result in the ultrarelativistic regime
@@ -377,7 +386,7 @@ int get_phi_M_lrs(struct background * pba, double z, double * phi_M){
     return _SUCCESS_;
   }
   
-  double x2 = 0, x1=-pba->lrs_m_F/pba->lrs_g_over_M; // We know that -m <= g*phi <= 0. This ensures that mTilde will always be positive
+  double x2 = 0, x1=-pba->lrs_m_F/pba->lrs_g_over_M; // We know that -m0 <= g*phi <= 0. This ensures that the effective fermion mass will always be positive
   struct background_parameters_and_redshift bpaz;
   bpaz.pba = pba;
   bpaz.z = z;
@@ -420,7 +429,7 @@ int get_phi_M_lrs(struct background * pba, double z, double * phi_M){
 int instabilityOnset_lrs(struct background * pba, double * a_rel){
   double mT_over_T;
   
-  /* Interpolate to obtain mT/T at instability onset */
+  /* Interpolate to obtain mT/T at instability onset (mT is the effective fermion mass) */
   
   double min_g = 5, max_g = pow(10, 1.2),
     max_log10g = 7; // Limits of the interpolation arrays
@@ -504,7 +513,20 @@ int instabilityOnset_lrs(struct background * pba, double * a_rel){
     return _SUCCESS_;
   }
 
-  /* Convert mT_over_T to scale factor */
+  /* Convert mT_over_T to scale factor 
+     To this purpose, we have to compute m0/T given mT/T as a = (m0/T) / (m0/T0)
+     The relationship between m0 and mT is given by the following system of equations
+      | M phi = -g/M T^3 I_Mphi
+      | mT = m0 + g phi      
+      M/g (mT-m0) = -g/M T^3 I_Mphi
+      m0/T = mT/T + g^2/M^2 T^2 I_Mphi
+      m0/T = mT/T + g^2 m0^2/M^2 (T/m0)^2 I_Mphi
+     Let x = T/m0
+      1 = mT/T x + g^2 m0^2/M^2 I_Mphi x^3
+     Let A = mT/T, B = g^2 m0^2/M^2 I_Mphi
+      x^3 + A/B x - 1/B = 0
+     We have to solve this cubic equation     
+  */
 
   double I_Mphi;
   class_call(background_lrs_momenta(pba->q_lrs_bg,
@@ -521,18 +543,7 @@ int instabilityOnset_lrs(struct background * pba, double * a_rel){
 				    NULL),
              pba->error_message,
              pba->error_message);
-
-  /* Solve the cubic equation:
-      | M phi = -g/M T^3 I_Mphi
-      | mT = m0 + g phi
-      M/g (mT-m0) = -g/M T^3 I_Mphi
-      m0/T = mT/T + g^2/M^2 T^2 I_Mphi
-      m0/T = mT/T + g^2 m0^2/M^2 (T/m0)^2 I_Mphi
-     Let x = T/m0
-      1 = mT/T x + g^2 m0^2/M^2 I_Mphi x^3
-     Let A = mT/T, B = g^2 m0^2/M^2 I_Mphi
-      x^3 + A/B x - 1/B = 0
-  */
+  
   double A = mT_over_T;
   double B = SQR(pba->lrs_g_over_M * pba->lrs_m_F) * I_Mphi;
   double T_over_m0 = cbrt(1/B) * (cbrt(0.5 + sqrt(0.25 + CUB(A/3)/B)) +

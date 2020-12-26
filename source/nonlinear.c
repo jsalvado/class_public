@@ -1099,7 +1099,7 @@ int nonlinear_sigmas_at_z(
  * @param pnl     Input: pointer to nonlinear structure
  * @param z       Input: redshift
  * @param k_nl    Output: k_nl value
- * @param k_nl_cb Ouput: k_nl value of the cdm+baryon part only, if there is ncdm
+ * @param k_nl_cb Ouput: k_nl value of the cdm+baryon part only, if there is ncdm or lrs
  * @return the error status
  */
 
@@ -1252,12 +1252,10 @@ int nonlinear_init(
           fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But it sounds like you are running with a WDM component of mass %f eV, which makes the use of Halofit suspicious.\n",pba->m_ncdm_in_eV[index_ncdm]);
       }
     }
-
     if (pba->has_lrs) {
       if (pba->lrs_m_F >  _M_EV_TOO_BIG_FOR_HALOFIT_)
 	fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But it sounds like you are running with a WDM component of mass %f eV, which makes the use of Halofit suspicious.\n",pba->lrs_m_F);
-    }
-    
+    }    
     if (pba->has_idm_dr){
       fprintf(stdout,"Warning: Halofit and HMcode are proved to work for CDM, and also with a small HDM component. But you have requested interacting dark matter (idm_dr), which makes the use of Halofit or HMCode unreliable.\n");
     }
