@@ -41,15 +41,17 @@ code as CLASS cannot properly model.
 This can be overcome by assuming that _nugget_ formation takes place
 over timescales and distances much smaller than cosmological scales. In
 this case, one can enforce an _instantaneous_ transition to a dust-like
-behaviour for some pre-computed fermion temperature T<sub>nug</sub>. This is
+behaviour below some pre-computed fermion temperature T<sub>nug</sub>. This is
 equivalent to setting
 
 _longrangescalar\_phi\_pt_ = 'N'
+
 _longrangescalar\_nuggets_ = 'y'
+
 
 It is important to turn off scalar field perturbations, as they may make
 perturbations exponentially grow if T<sub>nug</sub> is not 100% precise. For the
-details of how we estimate T<sub>nug</sub>, see Appendix B in the companion paper.
+details on how we estimate T<sub>nug</sub>, see Appendix B in the companion paper.
 
 The code can also be run with scalar field perturbations, in which case
 non-relativistic fermion density perturbations will exponentially grow.
@@ -58,6 +60,8 @@ those computed by CLASS, what in turn affects the background. Such
 simulations are therefore unphysical.
 
 Apart from that, the implementation largely follows the CLASS 2.9.2
-implementation of warm relics (named _ncdm_ in the code). Fluid
-approximations are in principle implemented, but their accuracy has not
-been tested. Tensor perturbations have not been properly implemented.
+implementation of warm relics (named _ncdm_ in the code). The fermion momentum 
+distribution function is hard-coded to be Fermi-Dirac of an ultrarelativistic relic.
+This can be easily modified in the function _background\_lrs\_distribution_
+of the file _source/longrange.c_. Fluid approximations are in principle implemented, but 
+their accuracy has not been tested. Tensor perturbations have not been properly implemented.
